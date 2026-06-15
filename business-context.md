@@ -6,7 +6,7 @@ This project is an educational simulation game for learning distributed systems 
 
 Instead of reading architecture diagrams from books, users will build architectures by dragging infrastructure components onto a canvas, configuring them, and running a mathematical simulation to observe the system's behavior.
 
-The goal is to teach real-world architectural tradeoffs such as scalability, latency, availability, caching, replication, load balancing, queueing, and infrastructure cost.
+The goal is to teach real-world architectural tradeoffs such as horizontal/vertical scalability, latency, availability, caching, replication, sharding, load balancing, queueing, and infrastructure cost.
 
 This project should feel like a hybrid of a puzzle game and a cloud architecture simulator.
 
@@ -16,11 +16,13 @@ This project should feel like a hybrid of a puzzle game and a cloud architecture
 
 Every architectural decision has consequences.
 
-Adding Redis reduces database load but increases infrastructure cost.
-
-Adding replicas increases availability but consumes more budget.
-
-Changing cache TTL may reduce latency but introduce stale data.
+* Adding server replicas increases availability but consumes more budget.
+* Adding Redis reduces database load but increases cost.
+* Changing cache TTL may reduce latency but introduce stale data.
+* Scaling vertically (larger instances) is easy but hits a hard limit and becomes expensive.
+* Scaling horizontally introduces network complexity and concurrency issues.
+* Database Sharding solves write bottlenecks but complicates data routing.
+* Database Replication solves read bottlenecks but introduces replication lag.
 
 Users should learn that there is rarely a single perfect architecture. Instead, they should optimize tradeoffs under constraints.
 
@@ -30,13 +32,13 @@ Users should learn that there is rarely a single perfect architecture. Instead, 
 
 1. User selects a challenge.
 2. User receives an initial infrastructure budget.
-3. User builds the architecture using drag-and-drop components.
-4. User configures component parameters.
+3. User builds the architecture using drag-and-drop components by establishing a valid request flow pipeline.
+4. User configures component parameters (including instance scaling types).
 5. User runs the simulation.
-6. The simulation engine evaluates the architecture mathematically.
-7. A detailed system report is generated.
-8. User earns reward currency based on architecture quality.
-9. Reward currency is carried into future levels.
+6. The simulation engine evaluates the architecture mathematically using a 1-second time-step interval.
+7. A detailed system report is generated including percentile latencies and data consistency metrics.
+8. User earns **Reward Currency (Research Funds / XP)** and performance-based budget bonuses.
+9. Earned Research Funds are spent in the Tech Tree to unlock advanced scaling components.
 
 ---
 
@@ -69,35 +71,23 @@ Users cannot unlock later challenges until previous ones are completed.
 
 ---
 
-# Simulation Engine
+# Simulation Engine & Request Flow Path (Routing Logic)
+The engine processes data in **1-second discrete time-steps** to evaluate real-time queue lengths, cache-miss spikes, and database degradation under peak loads. 
 
-The simulation is mathematical, not visual animation.
+The user’s visual design is parsed as a **Directed Acyclic Graph (DAG)**. Traffic originates from the `Internet/Client` node and flows along the directional edges. The engine validates routing rules (e.g., traffic cannot hit a Database Shard without passing through an API/Proxy or Shard Router).
 
-When the user presses "Start", the engine simulates the workload for a predefined duration.
-
-Example:
-
-* 500 requests/sec
-* duration: 45 seconds
-
-The engine calculates:
-
-* request flow
-* queue length
-* cache hits
-* cache misses
-* database load
-* replica utilization
-* autoscaling events
-* dropped requests
-* latency
-* infrastructure cost
-* availability
-* bottlenecks
-
-Simulation determines whether the architecture succeeds or fails.
 
 ---
+
+# Real-Time Visual Animation Mechanics
+The visual canvas dynamically streams system health and resource consumption updates every second:
+* **Animated Edges:** Edges render moving directional pulses or particle dots along the request paths, visually mapping traffic velocity and load distribution.
+* **Numeric Capacity Counters:** Nodes (API Servers, Databases) display real-time numeric text counters showing current active connections/workload vs. maximum absolute capacity.
+* **Dynamic Color-Coded Progress Bars:** System load is tracked via color-shifting progress status overlays:
+  * **Green (0% - 60% Load):** Optimal operating state.
+  * **Orange (61% - 89% Load):** System under high pressure, nearing a bottleneck.
+  * **Red (90% - 100%+ Load):** Severely overloaded state. When capacity issues ease or autoscaling registers new instances, status colors dynamically revert to green.
+* **Database Connection Pool Tracking:** Databases render specialized countdown indicators reflecting active vs. depleted connection pools in real-time.
 
 # Infrastructure Components
 
@@ -130,6 +120,7 @@ Database
 * replica count
 * connection limit
 * storage
+* capacity limit (Req/s)
 
 Queue
 
@@ -185,23 +176,8 @@ Users can modify configuration before running the simulation.
 
 ---
 
-# Cost System
-
-Every challenge starts with an Initial Budget.
-
-Users spend budget by purchasing infrastructure components.
-
-Better architecture should preserve more budget.
-
-Reward currency carries into future levels.
-
-Reward pool for a level:
-
-Current Initial Budget + Total Rewards Earned From Previous Levels
-
-The more efficiently a user solves challenges, the larger infrastructure they can afford in future scenarios.
-
-This acts as a business growth mechanic.
+# Progression & Cost System
+* **Global Research Fund (XP):** High-performing architectures earn global XP/Research Funds. Users spend this currency in the global **Tech Tree** to unlock advanced components like `Kafka Queue`, `Shard Router`, `CDN`, and `Database Replication clusters`.
 
 ---
 
@@ -314,23 +290,21 @@ Controls:
 * Resume
 * Reset
 
-Logs should display architect-level infrastructure events.
+The time-steps are locked to an on-screen scrolling terminal outputting granular system events, state shifts, and infrastructure notifications with contextual formatting:
+http://googleusercontent.com/immersive_entry_chip/0
 
 Example:
 
-Request Received
-
-Cache Hit
-
-Cache Miss
-
-Database Overloaded
-
-Replica Activated
-
-Autoscaling Triggered
-
-Simulation Completed
+[00:00] ⚙️ [SYSTEM] Initialization completed. Setup inventory loaded.
+[00:00] ⚙️ [SYSTEM] Reloaded Stage: "The Viral Tweet". Ready to play.
+[00:01] 🚀 [SYSTEM] Simulation thread initialized. Traffic flowing...
+[00:05] ℹ️ [INFO] Cache hit ratio stabilized at 82%. Database load decreasing.
+[00:12] ⚠️ [WARN] Database Connection Pool utilization reached 90%. Queue piling up!
+[00:15] ❌ [CRITICAL] Web Server #2 experienced thermal shutdown from overload!
+[00:16] ❌ [CRITICAL] Web Server #2 experienced thermal shutdown from overload!
+[00:20] 📈 [AUTOSCALING] Triggered scaling event: Spawning Web Server #3.
+[00:21] ✅ [SUCCESS] Web Server #3 healthy. Rebalancing traffic.
+[00:45] 🏁 [SYSTEM] Simulation completed. Generating final report...
 
 ---
 
