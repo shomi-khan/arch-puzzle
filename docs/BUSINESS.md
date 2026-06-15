@@ -1,3 +1,4 @@
+../business-context.md
 # Business Context: System Design Simulation Puzzle
 
 ## Overview
