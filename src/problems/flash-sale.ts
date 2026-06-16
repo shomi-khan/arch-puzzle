@@ -46,5 +46,5 @@ export const flashSale: Problem = {
     { metric: 'balance',          operator: 'gte', value: 0,   label: 'Budget not exceeded' },
   ],
   scoringProfile: 'costFocused',
-  unlocksAfter: null,
+  unlocksAfter: 'url-shortener',
 }

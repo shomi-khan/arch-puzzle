@@ -157,17 +157,56 @@ export interface SimulationResult {
  * Stored in src/problems/*.ts and registered in src/problems/index.ts
  */
 export interface Problem {
+  /** Unique string identifier — used in URLs e.g. /sys-simulation/url-shortener */
   id: string
+
+  /** Display title shown on challenge card and builder page */
   title: string
+
+  /** One-line subtitle shown on challenge card */
   subtitle: string
+
+  /** Difficulty level — controls badge color and unlock order */
   difficulty: Difficulty
+
+  /** Full description shown on builder page — explains the scenario and hints */
   description: string
+
+  /** How long the simulation runs in seconds */
   durationSeconds: number
+
+  /** Starting budget in dollars — components consume this during simulation */
   initialBudget: number
+
+  /**
+   * Timeline of traffic values across the simulation duration.
+   * Engine interpolates between points to get rps at any given second.
+   */
   trafficPattern: TrafficPattern
-  availableComponents: string[]   // list of ComponentDefinition.type values
+
+  /**
+   * Which component types the user is allowed to place on the canvas.
+   * References ComponentDefinition.type values from src/config/components.ts.
+   * Restricting available components is part of the challenge design.
+   */
+  availableComponents: string[]
+
+  /**
+   * Conditions that must ALL be true at simulation end for the challenge to be passed.
+   * Evaluated by the engine after the final tick.
+   */
   successConditions: SuccessCondition[]
+
+  /**
+   * References a named weight profile in src/config/scoring.ts.
+   * Controls how the final score is calculated for this challenge.
+   */
   scoringProfile: ScoringProfile
+
+  /**
+   * ID of the problem that must be solved before this one unlocks.
+   * null = always unlocked (first challenge in the sequence).
+   */
   unlocksAfter: string | null
 }
 
