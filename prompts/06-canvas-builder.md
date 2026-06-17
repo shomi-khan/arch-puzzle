@@ -20,6 +20,7 @@ Now implement the **builder page** at `/sys-simulation/[id]`. This is a fully cl
 - Every component must have a top-level JSDoc comment.
 - Every prop must have an inline comment.
 - Mobile: show `MobileBlock`, hide canvas.
+- React Flow `nodeTypes` and `edgeTypes` must be declared at module level, outside component functions. Do not use inline objects or `useMemo` for these type maps.
 
 ---
 
@@ -288,6 +289,22 @@ Create a `SimulationNode` component inside `Canvas.tsx` (not exported):
  * and a load percentage bar (visible only during/after simulation).
  */
 ```
+
+After defining `SimulationNode`, declare React Flow type maps at module level:
+
+```tsx
+const nodeTypes = {
+  simulation: SimulationNode,
+}
+
+// If custom edge types are added later, keep this module-level too.
+// const edgeTypes = {
+//   custom: CustomEdge,
+// }
+```
+
+Do not write `nodeTypes={{ simulation: SimulationNode }}` inside `<ReactFlow />`.
+React Flow treats inline objects as new references on every render and will warn/re-initialize.
 
 Node visual:
 ```
