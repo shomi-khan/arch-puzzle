@@ -7,24 +7,197 @@ It is a standalone Next.js application deployed on Vercel.
 Users learn distributed systems by dragging infrastructure components onto a canvas, building architectures, and running a mathematical simulation to observe system behavior.
 
 ## Task
-Scaffold the entire project structure. Create all folders and placeholder files with proper comments. Do not implement any logic yet — only structure, types, and config skeletons.
+Create all project config files, folders, and placeholder files with proper comments. Do not implement any logic yet — only structure, types, config skeletons, and project setup files.
+
+The project must be ready to run with `npm i && npm run dev` — no CLI scaffolding commands needed.
 
 ---
 
-## Tech Stack
-- Next.js (App Router)
-- TypeScript (strict mode, no `any`)
-- Tailwind CSS
-- React Flow (for canvas — install it)
-- Lucide React (for icons — install it)
+## Project config files — create all of these first
 
----
+### `package.json`
+```json
+{
+  "name": "sys-simulation",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "reactflow": "^11.11.4",
+    "lucide-react": "^0.469.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.0",
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "typescript": "^5"
+  }
+}
+```
 
-## Commands to run first
-```bash
-npx create-next-app@latest sys-simulation --typescript --tailwind --eslint --app --src-dir --no-import-alias
-cd sys-simulation
-npm install reactflow lucide-react
+### `tsconfig.json`
+```json
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
+
+### `next.config.ts`
+```ts
+/**
+ * next.config.ts
+ *
+ * Next.js configuration for sys-simulation.
+ * Deployed on Vercel — standard Next.js deployment.
+ * No `output: 'export'` needed — Vercel handles SSR natively.
+ */
+
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
+  devIndicators: false,
+}
+
+export default nextConfig
+```
+
+### `tailwind.config.ts`
+```ts
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+export default config
+```
+
+### `postcss.config.mjs`
+```js
+const config = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+export default config
+```
+
+### `.eslintrc.json`
+```json
+{
+  "extends": ["next/core-web-vitals", "next/typescript"]
+}
+```
+
+### `src/app/globals.css`
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark/light mode via system preference — no toggle needed */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --border: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --border: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+  }
+}
+```
+
+### `src/app/layout.tsx`
+```tsx
+import type { Metadata } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import './globals.css'
+
+const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
+const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'sys-simulation',
+  description: 'Learn distributed systems by building and simulating real architectures.',
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {children}
+      </body>
+    </html>
+  )
+}
+```
+
+### `src/app/page.tsx`
+```tsx
+/**
+ * src/app/page.tsx
+ *
+ * Root page — redirects to /sys-simulation.
+ * Keeps the root URL clean and forwards visitors to the game.
+ */
+
+import { redirect } from 'next/navigation'
+
+export default function RootPage() {
+  redirect('/sys-simulation')
+}
 ```
 
 ---
@@ -55,6 +228,8 @@ src/
 │   ├── simulator.ts                        # Core game loop — pure TS, no React
 │   ├── scorer.ts                           # Score calculation — pure functions
 │   └── validator.ts                        # DAG validation logic
+├── hooks/
+│   └── useSimulation.ts                    # Game loop hook
 ├── problems/
 │   ├── index.ts                            # Problem registry — ordered export
 │   ├── url-shortener.ts                    # Problem 1
@@ -62,15 +237,16 @@ src/
 ├── config/
 │   ├── scoring.ts                          # Scoring weight profiles
 │   └── components.ts                       # Infrastructure component registry
+├── lib/
+│   ├── progress.ts                         # localStorage progress tracking
+│   └── traffic.ts                          # Traffic interpolation utilities
 └── types/
     └── index.ts                            # All shared TypeScript interfaces
 ```
 
 ---
 
-## `src/types/index.ts` — implement this fully
-
-Define all shared types. Every other file imports from here.
+## `src/types/index.ts` — implement fully
 
 ```ts
 /**
@@ -243,11 +419,15 @@ export interface Problem {
   availableComponents: string[]   // list of ComponentDefinition.type values
   successConditions: SuccessCondition[]
   scoringProfile: ScoringProfile
+  /**
+   * ID of the problem that must be solved before this one unlocks.
+   * null = always unlocked (first challenge in the sequence).
+   */
   unlocksAfter: string | null
 }
 
 /**
- * Simulation runtime state managed by React (zustand or useState).
+ * Simulation runtime state managed by React.
  * Passed down to engine functions each tick.
  */
 export interface SimulationState {
@@ -262,7 +442,7 @@ export interface SimulationState {
 
 ---
 
-## `src/config/scoring.ts` — implement this fully
+## `src/config/scoring.ts` — implement fully
 
 ```ts
 /**
@@ -329,7 +509,7 @@ export const XP_MULTIPLIER = 5
 
 ---
 
-## `src/config/components.ts` — implement this fully
+## `src/config/components.ts` — implement fully
 
 ```ts
 /**
@@ -343,7 +523,8 @@ export const XP_MULTIPLIER = 5
  *
  * HOW TO ADD A NEW COMPONENT:
  * 1. Add a new entry to the `componentRegistry` array below
- * 2. The engine, canvas, and palette will automatically pick it up
+ * 2. Add the icon to the iconMap in ComponentPalette.tsx
+ * 3. The engine, canvas, and palette will automatically pick it up
  *
  * Icon names reference lucide-react icon identifiers.
  * Border colors are mapped by category in the Canvas component.
@@ -445,6 +626,9 @@ export const componentRegistry: ComponentDefinition[] = [
 /**
  * Helper: look up a component definition by its type string.
  * Returns undefined if not found — caller must handle this case.
+ *
+ * @param type - The component type string e.g. 'load-balancer'
+ * @returns ComponentDefinition or undefined
  */
 export function getComponentByType(type: string): ComponentDefinition | undefined {
   return componentRegistry.find((c) => c.type === type)
@@ -453,7 +637,7 @@ export function getComponentByType(type: string): ComponentDefinition | undefine
 
 ---
 
-## Placeholder files — create these with top-level comments only, no logic
+## Placeholder files — create with top-level comments only
 
 ### `src/engine/simulator.ts`
 ```ts
@@ -461,19 +645,9 @@ export function getComponentByType(type: string): ComponentDefinition | undefine
  * src/engine/simulator.ts
  *
  * Core simulation game loop.
- *
- * WHY THIS EXISTS:
- * This is the heart of the game. It processes one tick (1 second) at a time,
- * traverses the user's architecture DAG, calculates load on each node,
- * tracks dropped requests, latency, and budget consumption.
- *
- * IMPORTANT:
- * - Pure TypeScript only. No React imports. No DOM access.
- * - All functions must be pure (same input → same output, no side effects).
- * - React components call these functions and store results in state.
+ * Pure TypeScript only. No React imports. No DOM access.
+ * React components call these functions and store results in state.
  */
-
-// TODO: implement in Step 4
 export {}
 ```
 
@@ -483,17 +657,9 @@ export {}
  * src/engine/scorer.ts
  *
  * Score calculation functions.
- *
- * WHY THIS EXISTS:
- * After simulation completes, we aggregate all tick metrics into a final score.
- * Score is calculated using configurable weight profiles from src/config/scoring.ts.
- *
- * IMPORTANT:
- * - All functions are pure. No side effects.
- * - Weights are injected — never hardcoded here.
+ * All functions are pure — same input always produces same output.
+ * Weights are injected from src/config/scoring.ts — never hardcoded here.
  */
-
-// TODO: implement in Step 4
 export {}
 ```
 
@@ -502,19 +668,22 @@ export {}
 /**
  * src/engine/validator.ts
  *
- * Architecture validation logic.
- *
- * WHY THIS EXISTS:
- * Before simulation starts, we validate that the user's canvas forms a valid
- * Directed Acyclic Graph (DAG) with a proper request flow path.
- * Example: traffic cannot reach a Database without passing through an API Server.
- *
- * IMPORTANT:
- * - Pure TypeScript only.
- * - Returns structured validation errors, not thrown exceptions.
+ * Architecture validation — runs before simulation starts.
+ * Validates the user's canvas forms a valid DAG with a proper request flow.
+ * Returns structured validation errors, never throws exceptions.
  */
+export {}
+```
 
-// TODO: implement in Step 4
+### `src/hooks/useSimulation.ts`
+```ts
+/**
+ * src/hooks/useSimulation.ts
+ *
+ * Custom React hook — owns the entire simulation game loop.
+ * The builder page calls this hook and gets back handlers and state.
+ * Implemented in Step 7.
+ */
 export {}
 ```
 
@@ -526,26 +695,27 @@ export {}
  * Problem registry — the single source of truth for all challenges.
  *
  * HOW TO ADD A NEW PROBLEM:
- * 1. Create a new file in src/problems/ (e.g. src/problems/chat-app.ts)
+ * 1. Create a new file in src/problems/
  * 2. Import it here and add it to the `problems` array
  * 3. Order in this array = order shown on the challenge list page
- *
- * No other files need to change.
  */
 
 import type { Problem } from '@/types'
 import { urlShortener } from './url-shortener'
 import { flashSale } from './flash-sale'
 
-/** Ordered list of all challenges. First = shown first on list page. */
 export const problems: Problem[] = [
   urlShortener,
   flashSale,
 ]
 
-/** Helper: find a problem by its id. Returns undefined if not found. */
 export function getProblemById(id: string): Problem | undefined {
   return problems.find((p) => p.id === id)
+}
+
+export function getPrerequisite(problem: Problem): Problem | null {
+  if (!problem.unlocksAfter) return null
+  return getProblemById(problem.unlocksAfter) ?? null
 }
 ```
 
@@ -556,9 +726,6 @@ export function getProblemById(id: string): Problem | undefined {
  *
  * Challenge: URL Shortener
  * Difficulty: Beginner
- *
- * The user must build an architecture that handles read-heavy traffic
- * with a burst spike, while staying within budget.
  */
 
 import type { Problem } from '@/types'
@@ -591,12 +758,13 @@ export const urlShortener: Problem = {
     'rate-limiter',
   ],
   successConditions: [
-    { metric: 'availability',     operator: 'gte', value: 99,   label: 'Availability ≥ 99%' },
-    { metric: 'avgLatency',       operator: 'lte', value: 100,  label: 'Avg latency ≤ 100ms' },
-    { metric: 'droppedRequests',  operator: 'lte', value: 0,    label: 'Zero dropped requests' },
-    { metric: 'balance',          operator: 'gte', value: 0,    label: 'Budget not exceeded' },
+    { metric: 'availability',    operator: 'gte', value: 99,  label: 'Availability ≥ 99%' },
+    { metric: 'avgLatency',      operator: 'lte', value: 100, label: 'Avg latency ≤ 100ms' },
+    { metric: 'droppedRequests', operator: 'lte', value: 0,   label: 'Zero dropped requests' },
+    { metric: 'balance',         operator: 'gte', value: 0,   label: 'Budget not exceeded' },
   ],
   scoringProfile: 'default',
+  unlocksAfter: null,
 }
 ```
 
@@ -607,9 +775,6 @@ export const urlShortener: Problem = {
  *
  * Challenge: Flash Sale
  * Difficulty: Medium
- *
- * The user must survive a 10x traffic spike on a tight budget.
- * Over-engineering is penalized — cost efficiency matters here.
  */
 
 import type { Problem } from '@/types'
@@ -645,18 +810,42 @@ export const flashSale: Problem = {
     'message-queue',
   ],
   successConditions: [
-    { metric: 'availability',     operator: 'gte', value: 95,  label: 'Availability ≥ 95%' },
-    { metric: 'droppedRequests',  operator: 'lte', value: 50,  label: 'Dropped requests ≤ 50' },
-    { metric: 'balance',          operator: 'gte', value: 0,   label: 'Budget not exceeded' },
+    { metric: 'availability',    operator: 'gte', value: 95, label: 'Availability ≥ 95%' },
+    { metric: 'droppedRequests', operator: 'lte', value: 50, label: 'Dropped requests ≤ 50' },
+    { metric: 'balance',         operator: 'gte', value: 0,  label: 'Budget not exceeded' },
   ],
   scoringProfile: 'costFocused',
+  unlocksAfter: 'url-shortener',
 }
+```
+
+### `src/lib/progress.ts`
+```ts
+/**
+ * src/lib/progress.ts
+ *
+ * Player progress tracking — stores which challenges have been solved.
+ * All localStorage access is isolated here.
+ * Implemented in Step 3.
+ */
+export {}
+```
+
+### `src/lib/traffic.ts`
+```ts
+/**
+ * src/lib/traffic.ts
+ *
+ * Traffic interpolation utilities.
+ * Implemented in Step 3.
+ */
+export {}
 ```
 
 ### Remaining placeholder files — create with top-level comment only
 
 `src/components/ui/Badge.tsx` — Shared badge component for difficulty labels
-`src/components/ui/Button.tsx` — Shared button component with variants
+`src/components/ui/Button.tsx` — Shared button with variants
 `src/components/ui/StatCard.tsx` — Displays a single metric (label + value)
 `src/components/ui/Terminal.tsx` — Scrolling log terminal UI
 `src/components/simulation/Canvas.tsx` — React Flow drag-and-drop canvas
@@ -673,40 +862,13 @@ Each placeholder must have:
 
 ---
 
-## Tailwind dark/light setup
+## Verification checklist
 
-In `src/app/globals.css`, add after existing styles:
-
-```css
-/* Dark/light mode via system preference — no toggle needed */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    --border: #e2e8f0;
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-  }
-}
-```
-
----
-
-## Verification checklist (run after completing)
-
+- [ ] `npm i` completes without errors
 - [ ] `npm run dev` starts without errors
 - [ ] `npm run build` completes without type errors
 - [ ] All files exist at the paths listed above
+- [ ] Root `/` redirects to `/sys-simulation`
 - [ ] No `any` types anywhere
 - [ ] Every file has a top-level comment
 - [ ] `src/types/index.ts` exports all interfaces listed above
