@@ -14,7 +14,6 @@
 import {
   useCallback,
   useMemo,
-  useRef,
   type ComponentType,
   type DragEvent,
 } from 'react'
@@ -29,7 +28,6 @@ import {
   ReactFlowProvider,
   addEdge,
   applyEdgeChanges,
-  applyNodeChanges,
   useReactFlow,
   type Connection,
   type Edge,
@@ -152,6 +150,8 @@ const nodeTypes = {
   simulation: SimulationNode,
 }
 
+const COMPONENT_DRAG_TYPE = 'application/sys-simulation-component'
+
 function toCanvasEdge(edge: Edge): CanvasEdge {
   return {
     id: edge.id,
@@ -193,7 +193,6 @@ function CanvasInner({
   onEdgesChange,
   disabled,
 }: CanvasProps) {
-  const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const reactFlowInstance = useReactFlow()
 
   const flowNodes = useMemo(
@@ -206,18 +205,31 @@ function CanvasInner({
     (changes: NodeChange[]) => {
       if (disabled) return
 
-      const changedNodes = applyNodeChanges(changes, flowNodes)
-      const nextNodes = changedNodes
-        .map((flowNode) => {
-          const current = nodes.find((node) => node.instanceId === flowNode.id)
-          if (!current) return null
+      const hasCanvasStateChange = changes.some(
+        (change) =>
+          change.type === 'remove' ||
+          (change.type === 'position' && Boolean(change.position)),
+      )
+      if (!hasCanvasStateChange) return
 
-          return {
-            ...current,
-            position: flowNode.position,
-          }
+      const removedNodeIds = new Set(
+        changes
+          .filter((change) => change.type === 'remove')
+          .map((change) => change.id),
+      )
+      const positionChanges = new Map<string, CanvasNode['position']>()
+      changes.forEach((change) => {
+        if (change.type === 'position' && change.position) {
+          positionChanges.set(change.id, change.position)
+        }
+      })
+
+      const nextNodes = nodes
+        .filter((node) => !removedNodeIds.has(node.instanceId))
+        .map((node) => {
+          const position = positionChanges.get(node.instanceId)
+          return position ? { ...node, position } : node
         })
-        .filter((node): node is CanvasNode => Boolean(node))
 
       const keptIds = new Set(nextNodes.map((node) => node.instanceId))
       onNodesChange(nextNodes)
@@ -228,7 +240,7 @@ function CanvasInner({
         ),
       )
     },
-    [disabled, edges, flowNodes, nodes, onEdgesChange, onNodesChange],
+    [disabled, edges, nodes, onEdgesChange, onNodesChange],
   )
 
   const handleEdgesChange = useCallback(
@@ -264,15 +276,17 @@ function CanvasInner({
       event.preventDefault()
       if (disabled) return
 
-      const componentType = event.dataTransfer.getData('componentType')
+      const componentType =
+        event.dataTransfer.getData(COMPONENT_DRAG_TYPE) ||
+        event.dataTransfer.getData('text/plain')
       if (!componentType) return
 
-      const bounds = reactFlowWrapper.current?.getBoundingClientRect()
-      if (!bounds) return
+      const component = getComponentByType(componentType)
+      if (!component) return
 
       const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
+        x: event.clientX,
+        y: event.clientY,
       })
 
       const newNode: CanvasNode = {
@@ -296,9 +310,6 @@ function CanvasInner({
 
   return (
     <div
-      ref={reactFlowWrapper}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
       className="h-full flex-1 bg-slate-100 dark:bg-slate-900"
     >
       <ReactFlow
@@ -311,6 +322,8 @@ function CanvasInner({
         onNodesChange={handleNodesChange}
         onEdgesChange={handleEdgesChange}
         onConnect={handleConnect}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
         fitView
       >
         <Background />

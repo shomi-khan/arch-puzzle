@@ -53,6 +53,8 @@ const iconMap: Record<string, ComponentType<{ size?: number }>> = {
   'rate-limiter': Shield,
 }
 
+const COMPONENT_DRAG_TYPE = 'application/sys-simulation-component'
+
 export default function ComponentPalette({
   availableComponents,
   disabled,
@@ -65,7 +67,8 @@ export default function ComponentPalette({
     event: DragEvent<HTMLDivElement>,
     componentType: string,
   ) {
-    event.dataTransfer.setData('componentType', componentType)
+    event.dataTransfer.setData(COMPONENT_DRAG_TYPE, componentType)
+    event.dataTransfer.setData('text/plain', componentType)
     event.dataTransfer.effectAllowed = 'move'
   }
 
