@@ -1,4 +1,3 @@
-````markdown
 # Step 1 — Project Scaffold & Folder Structure
 
 ## Context
@@ -28,7 +27,7 @@ The project must be ready to run with `npm i && npm run dev` — no CLI scaffold
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "15.1.0",
+    "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "reactflow": "^11.11.4",
@@ -39,7 +38,7 @@ The project must be ready to run with `npm i && npm run dev` — no CLI scaffold
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.1.0",
+    "eslint-config-next": "15.3.3",
     "tailwindcss": "^3.4.1",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
@@ -129,6 +128,101 @@ export default config
 {
   "extends": ["next/core-web-vitals", "next/typescript"]
 }
+```
+
+### `.gitignore`
+```
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+
+# Production build
+build/
+dist/
+
+# Environment variables — never commit these
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+```
+
+### `README.md`
+```markdown
+# sys-simulation
+
+> Learn distributed systems by *breaking* them.
+
+**[▶ Play now → sys-simulation.vercel.app](https://sys-simulation.vercel.app/)**
+
+---
+
+Drag a Load Balancer. Connect a Redis cache. Watch your database survive a 10x traffic spike — or melt under pressure.
+
+sys-simulation turns system design from passive reading into an active experiment. Build a real architecture, run a mathematical simulation, and see exactly why your decisions matter.
+
+---
+
+## How to play
+
+1. Pick a challenge
+2. Drag infrastructure components onto the canvas
+3. Connect them into a request flow pipeline
+4. Hit **Start** and watch traffic flow through your system
+5. Read the terminal. Watch the load bars. Don't let your database catch fire.
+
+---
+
+## Run locally
+
+\`\`\`bash
+git clone https://github.com/your-username/sys-simulation
+cd sys-simulation
+npm i && npm run dev
+\`\`\`
+
+Open [localhost:3000](http://localhost:3000) — you're in.
+
+---
+
+## Add a new challenge
+
+Create \`src/problems/your-challenge.ts\`, register it in \`src/problems/index.ts\`. Done. No engine changes needed.
+
+See \`docs/ARCHITECTURAL.md\` for full details on adding problems, components, and scoring profiles.
+
+---
+
+## Built with
+
+Next.js · TypeScript · React Flow · Tailwind CSS · Vercel
+
+---
+
+*Made for engineers who learn by building, not by reading.*
 ```
 
 ### `src/app/globals.css`
@@ -450,11 +544,6 @@ export interface SimulationState {
  *
  * Scoring weight profiles for the simulation engine.
  *
- * WHY THIS EXISTS:
- * Different challenges emphasize different tradeoffs.
- * A cost-optimization challenge should reward budget efficiency more than latency.
- * A high-availability challenge should penalize dropped requests heavily.
- *
  * HOW TO ADD A NEW PROFILE:
  * 1. Add a new key to `scoringProfiles`
  * 2. Add the key to the `ScoringProfile` type in src/types/index.ts
@@ -466,32 +555,18 @@ export interface SimulationState {
 import type { ScoringWeights } from '@/types'
 
 export const scoringProfiles: Record<string, ScoringWeights> = {
-  /**
-   * Default profile — balanced across all metrics.
-   * Used for general-purpose challenges.
-   */
   default: {
     availability: 0.35,
     latency: 0.25,
     costEfficiency: 0.20,
     errorRate: 0.20,
   },
-
-  /**
-   * Cost-focused profile — rewards architectures that stay within budget.
-   * Used for challenges where over-engineering is penalized.
-   */
   costFocused: {
     availability: 0.25,
     latency: 0.20,
     costEfficiency: 0.40,
     errorRate: 0.15,
   },
-
-  /**
-   * Latency-focused profile — rewards low-latency architectures.
-   * Used for real-time system challenges (e.g. chat, gaming).
-   */
   latencyFocused: {
     availability: 0.30,
     latency: 0.40,
@@ -517,17 +592,10 @@ export const XP_MULTIPLIER = 5
  *
  * Registry of all draggable infrastructure components available in the game.
  *
- * WHY THIS EXISTS:
- * Components are data, not code. Adding a new component type (e.g. Kafka, Shard Router)
- * should never require touching engine logic. Just add an entry here.
- *
  * HOW TO ADD A NEW COMPONENT:
  * 1. Add a new entry to the `componentRegistry` array below
  * 2. Add the icon to the iconMap in ComponentPalette.tsx
  * 3. The engine, canvas, and palette will automatically pick it up
- *
- * Icon names reference lucide-react icon identifiers.
- * Border colors are mapped by category in the Canvas component.
  */
 
 import type { ComponentDefinition } from '@/types'
@@ -623,13 +691,6 @@ export const componentRegistry: ComponentDefinition[] = [
   },
 ]
 
-/**
- * Helper: look up a component definition by its type string.
- * Returns undefined if not found — caller must handle this case.
- *
- * @param type - The component type string e.g. 'load-balancer'
- * @returns ComponentDefinition or undefined
- */
 export function getComponentByType(type: string): ComponentDefinition | undefined {
   return componentRegistry.find((c) => c.type === type)
 }
@@ -646,7 +707,7 @@ export function getComponentByType(type: string): ComponentDefinition | undefine
  *
  * Core simulation game loop.
  * Pure TypeScript only. No React imports. No DOM access.
- * React components call these functions and store results in state.
+ * Implemented in Step 4.
  */
 export {}
 ```
@@ -658,7 +719,7 @@ export {}
  *
  * Score calculation functions.
  * All functions are pure — same input always produces same output.
- * Weights are injected from src/config/scoring.ts — never hardcoded here.
+ * Implemented in Step 4.
  */
 export {}
 ```
@@ -669,8 +730,8 @@ export {}
  * src/engine/validator.ts
  *
  * Architecture validation — runs before simulation starts.
- * Validates the user's canvas forms a valid DAG with a proper request flow.
  * Returns structured validation errors, never throws exceptions.
+ * Implemented in Step 4.
  */
 export {}
 ```
@@ -681,7 +742,6 @@ export {}
  * src/hooks/useSimulation.ts
  *
  * Custom React hook — owns the entire simulation game loop.
- * The builder page calls this hook and gets back handlers and state.
  * Implemented in Step 7.
  */
 export {}
@@ -867,9 +927,10 @@ Each placeholder must have:
 - [ ] `npm i` completes without errors
 - [ ] `npm run dev` starts without errors
 - [ ] `npm run build` completes without type errors
-- [ ] All files exist at the paths listed above
+- [ ] `.gitignore` is present — `node_modules/` and `.next/` are excluded
+- [ ] `README.md` is present with live URL
 - [ ] Root `/` redirects to `/sys-simulation`
+- [ ] All files exist at the paths listed above
 - [ ] No `any` types anywhere
 - [ ] Every file has a top-level comment
 - [ ] `src/types/index.ts` exports all interfaces listed above
-````
