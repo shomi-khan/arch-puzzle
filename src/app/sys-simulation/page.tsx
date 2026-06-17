@@ -1,13 +1,42 @@
 /**
  * src/app/sys-simulation/page.tsx
  *
- * SSR challenge list page.
+ * Challenge list page - entry point of the game.
  *
- * WHY THIS EXISTS:
- * The entry point for the game — lists all available challenges with difficulty,
- * title, and unlock status. Server-rendered for fast initial load and SEO.
+ * WHY SSR:
+ * Challenge titles, subtitles, and descriptions are static data.
+ * Rendering them server-side makes them indexable by search engines,
+ * which helps with discoverability as a portfolio piece.
+ *
+ * Progress state is stored in localStorage, which only exists in the browser.
+ * So we render the challenge grid structure on the server, and hydrate unlock
+ * state on the client via the ChallengeGrid Client Component.
  */
 
+import ChallengeGrid from '@/components/simulation/ChallengeGrid'
+import MobileBlock from '@/components/simulation/MobileBlock'
+import { problems } from '@/problems'
+
+export const metadata = {
+  title: 'System Design Challenges - sys-simulation',
+  description: 'Learn distributed systems by building and simulating real architectures.',
+}
+
 export default function SysSimulationPage() {
-  return null
+  return (
+    <>
+      <MobileBlock />
+      <div className="hidden lg:block">
+        <header className="mb-6">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+            System Design Challenges
+          </h1>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Build. Simulate. Learn.
+          </p>
+        </header>
+        <ChallengeGrid problems={problems} />
+      </div>
+    </>
+  )
 }
