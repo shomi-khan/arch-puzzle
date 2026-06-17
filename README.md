@@ -1,4 +1,3 @@
-````markdown
 # sys-simulation
 
 > Learn distributed systems by *breaking* them.
@@ -50,4 +49,3 @@ Next.js · TypeScript · React Flow · Tailwind CSS · Vercel
 ---
 
 *Made for engineers who learn by building, not by reading.*
-````
