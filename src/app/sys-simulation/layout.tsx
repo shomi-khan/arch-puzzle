@@ -1,34 +1,46 @@
 /**
  * src/app/sys-simulation/layout.tsx
  *
- * Layout wrapper for all /sys-simulation routes.
+ * Shared layout for all /sys-simulation routes.
  *
- * WHY THIS EXISTS:
- * Provides consistent page padding, max-width, and the top navigation bar
- * shared between the challenge list page and the builder page.
- * Keeping layout here avoids duplicating it in every page.
+ * IMPORTANT CONSTRAINT:
+ * The builder page ([id]) needs full viewport height (h-screen) with no
+ * extra padding or max-width wrappers - the canvas must fill available space.
+ * The list page needs centered content with max-width and padding.
+ *
+ * Solution: apply max-width/padding only to the list page via its own
+ * wrapper div inside page.tsx. The layout renders children directly
+ * with only the nav bar above.
  */
 
+import type { ReactNode } from 'react'
+
+interface SysSimulationLayoutProps {
+  /** Route content rendered under the shared sys-simulation nav */
+  children: ReactNode
+}
+
+/**
+ * SysSimulationLayout - renders shared navigation without constraining pages.
+ */
 export default function SysSimulationLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: SysSimulationLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <div>
-            <p className="font-mono text-base font-semibold text-[var(--text-primary)]">
+            <span className="font-mono font-semibold text-slate-800 dark:text-slate-100">
               sys-simulation
-            </p>
-            <p className="text-xs text-[var(--text-secondary)]">
+            </span>
+            <span className="ml-2 hidden text-xs text-slate-400 sm:inline">
               system design playground
-            </p>
+            </span>
           </div>
         </div>
       </nav>
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+      {children}
     </div>
   )
 }

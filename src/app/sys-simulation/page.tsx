@@ -22,11 +22,14 @@ export const metadata = {
   description: 'Learn distributed systems by building and simulating real architectures.',
 }
 
+/**
+ * SysSimulationPage - renders the desktop challenge list and mobile block.
+ */
 export default function SysSimulationPage() {
   return (
     <>
       <MobileBlock />
-      <div className="hidden lg:block">
+      <div className="mx-auto hidden max-w-6xl px-6 py-8 lg:block">
         <header className="mb-6">
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             System Design Challenges

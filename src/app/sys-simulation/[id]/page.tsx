@@ -3,15 +3,22 @@
 /**
  * src/app/sys-simulation/[id]/page.tsx
  *
- * Builder page - where the user constructs their architecture and runs the simulation.
+ * Builder page - final wired version.
+ *
+ * Edge cases handled:
+ * 1. Problem not found (invalid id in URL) -> show not-found UI
+ * 2. Problem locked (prerequisite not solved) -> show locked UI
+ * 3. Problem found and unlocked -> show full builder
  *
  * WHY CLIENT COMPONENT:
- * React Flow requires browser APIs. Builder state is interactive and belongs
- * in client-side React state.
+ * React Flow requires browser APIs. Simulation state runs via setInterval.
+ * Progress (locked/unlocked) is read from localStorage - browser only.
+ * All three requirements make this a mandatory Client Component.
  */
 
-import Link from 'next/link'
 import { use } from 'react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import Canvas from '@/components/simulation/Canvas'
 import BuilderSidebar from '@/components/simulation/BuilderSidebar'
 import ComponentPalette from '@/components/simulation/ComponentPalette'
@@ -19,6 +26,7 @@ import MobileBlock from '@/components/simulation/MobileBlock'
 import ProblemHeader from '@/components/simulation/ProblemHeader'
 import { ResultOverlay } from '@/components/simulation/ResultOverlay'
 import { ValidationErrors } from '@/components/simulation/ValidationErrors'
+import Button from '@/components/ui/Button'
 import { useSimulation } from '@/hooks/useSimulation'
 import { isUnlocked } from '@/lib/progress'
 import { getProblemById } from '@/problems'
@@ -31,45 +39,63 @@ interface ChallengeBuilderPageProps {
   }>
 }
 
+/**
+ * ChallengeBuilderPage - resolves challenge route state and renders the builder.
+ */
 export default function ChallengeBuilderPage({
   params,
 }: ChallengeBuilderPageProps) {
   const { id } = use(params)
+  const router = useRouter()
   const problem = getProblemById(id)
 
   if (!problem) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-6">
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
-            Challenge not found
-          </h1>
-          <Link
-            href="/sys-simulation"
-            className="mt-4 inline-flex text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
-          >
-            Back to challenges
-          </Link>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
+        <div className="mb-4 text-4xl" aria-hidden="true">
+          🔍
         </div>
-      </main>
+        <h2 className="mb-2 text-xl font-semibold text-[var(--text-primary)]">
+          Challenge not found
+        </h2>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
+          The challenge you are looking for does not exist.
+        </p>
+        <Button
+          variant="secondary"
+          icon={<ArrowLeft size={16} />}
+          onClick={() => router.push('/sys-simulation')}
+        >
+          Back to Challenges
+        </Button>
+      </div>
     )
   }
 
   if (!isUnlocked(problem)) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)] px-6">
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
-            Complete the previous challenge first
-          </h1>
-          <Link
-            href="/sys-simulation"
-            className="mt-4 inline-flex text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
-          >
-            Back to challenges
-          </Link>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
+        <div className="mb-4 text-4xl" aria-hidden="true">
+          🔒
         </div>
-      </main>
+        <h2 className="mb-2 text-xl font-semibold text-[var(--text-primary)]">
+          Challenge locked
+        </h2>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
+          Complete{' '}
+          <span className="font-medium text-slate-700 dark:text-slate-300">
+            {problem.unlocksAfter}
+          </span>{' '}
+          first to unlock this challenge.
+        </p>
+        <Button
+          variant="secondary"
+          icon={<ArrowLeft size={16} />}
+          onClick={() => router.push('/sys-simulation')}
+        >
+          Back to Challenges
+        </Button>
+      </div>
     )
   }
 
@@ -102,9 +128,12 @@ function ChallengeBuilder({ problem }: ChallengeBuilderProps) {
     simState.status === 'running' || simState.status === 'paused'
 
   return (
-    <main className="min-h-screen bg-[var(--bg-primary)]">
-      <MobileBlock />
-      <div className="hidden h-screen flex-col lg:flex">
+    <>
+      <div className="block lg:hidden">
+        <MobileBlock />
+      </div>
+
+      <div className="hidden h-screen flex-col overflow-hidden lg:flex">
         <ProblemHeader
           problem={problem}
           simStatus={simState.status}
@@ -115,38 +144,44 @@ function ChallengeBuilder({ problem }: ChallengeBuilderProps) {
           onResume={handleResume}
           onReset={handleReset}
         />
-        <div className="flex min-h-0 flex-1">
+
+        <div className="flex min-h-0 flex-1 overflow-hidden">
           <ComponentPalette
             availableComponents={problem.availableComponents}
             disabled={structuralChangesDisabled}
           />
-          <section className="relative flex min-w-0 flex-1 flex-col">
+
+          <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
             {validationResult && !validationResult.valid ? (
-              <div className="bg-slate-100 p-4 dark:bg-slate-900">
+              <div className="px-4 pt-3">
                 <ValidationErrors errors={validationResult.errors} />
               </div>
             ) : null}
-            <Canvas
-              nodes={canvasNodes}
-              edges={canvas.edges}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
-              disabled={structuralChangesDisabled}
-            />
-            {simState.status === 'completed' && simState.result ? (
-              <ResultOverlay
-                result={simState.result}
-                problem={problem}
-                onReset={handleReset}
+
+            <div className="relative flex-1">
+              <Canvas
+                nodes={canvasNodes}
+                edges={canvas.edges}
+                onNodesChange={handleNodesChange}
+                onEdgesChange={handleEdgesChange}
+                disabled={structuralChangesDisabled}
               />
-            ) : null}
-          </section>
+              {simState.status === 'completed' && simState.result ? (
+                <ResultOverlay
+                  result={simState.result}
+                  problem={problem}
+                  onReset={handleReset}
+                />
+              ) : null}
+            </div>
+          </div>
+
           <BuilderSidebar
             simState={simState}
             initialBudget={problem.initialBudget}
           />
         </div>
       </div>
-    </main>
+    </>
   )
 }
