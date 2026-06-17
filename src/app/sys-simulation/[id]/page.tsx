@@ -11,16 +11,17 @@
  */
 
 import Link from 'next/link'
-import { use, useMemo, useState } from 'react'
+import { use } from 'react'
 import Canvas from '@/components/simulation/Canvas'
 import BuilderSidebar from '@/components/simulation/BuilderSidebar'
 import ComponentPalette from '@/components/simulation/ComponentPalette'
 import MobileBlock from '@/components/simulation/MobileBlock'
 import ProblemHeader from '@/components/simulation/ProblemHeader'
-import { validateArchitecture } from '@/engine/validator'
+import { ResultOverlay } from '@/components/simulation/ResultOverlay'
+import { ValidationErrors } from '@/components/simulation/ValidationErrors'
+import { useSimulation } from '@/hooks/useSimulation'
 import { isUnlocked } from '@/lib/progress'
 import { getProblemById } from '@/problems'
-import type { CanvasEdge, CanvasNode, SimulationState } from '@/types'
 
 interface ChallengeBuilderPageProps {
   /** Dynamic route params from /sys-simulation/[id] */
@@ -35,55 +36,6 @@ export default function ChallengeBuilderPage({
 }: ChallengeBuilderPageProps) {
   const { id } = use(params)
   const problem = getProblemById(id)
-  const [nodes, setNodes] = useState<CanvasNode[]>([])
-  const [edges, setEdges] = useState<CanvasEdge[]>([])
-  const [validationErrors, setValidationErrors] = useState<string[]>([])
-  const initialSimState = useMemo<SimulationState>(
-    () => ({
-      status: 'idle',
-      elapsed: 0,
-      balance: problem?.initialBudget ?? 0,
-      logs: [
-        {
-          second: 0,
-          level: 'system',
-          message:
-            'Initialization complete. Build your architecture and press Start.',
-        },
-      ],
-      tickHistory: [],
-      result: null,
-    }),
-    [problem?.initialBudget],
-  )
-  const [simState, setSimState] = useState<SimulationState>(initialSimState)
-
-  function resetSimulation() {
-    setSimState(initialSimState)
-    setValidationErrors([])
-  }
-
-  function updateNodes(nextNodes: CanvasNode[]) {
-    setNodes(nextNodes)
-    setValidationErrors([])
-  }
-
-  function updateEdges(nextEdges: CanvasEdge[]) {
-    setEdges(nextEdges)
-    setValidationErrors([])
-  }
-
-  function startSimulation() {
-    const result = validateArchitecture({ nodes, edges })
-
-    if (!result.valid) {
-      setValidationErrors(result.errors.map((error) => error.message))
-      return
-    }
-
-    setValidationErrors([])
-    setSimState((current) => ({ ...current, status: 'running' }))
-  }
 
   if (!problem) {
     return (
@@ -121,7 +73,33 @@ export default function ChallengeBuilderPage({
     )
   }
 
-  const structuralChangesDisabled = simState.status === 'running'
+  return <ChallengeBuilder problem={problem} />
+}
+
+interface ChallengeBuilderProps {
+  /** Challenge loaded from the problem registry */
+  problem: NonNullable<ReturnType<typeof getProblemById>>
+}
+
+/**
+ * ChallengeBuilder - wires simulation state into the builder layout.
+ */
+function ChallengeBuilder({ problem }: ChallengeBuilderProps) {
+  const {
+    simState,
+    canvasNodes,
+    validationResult,
+    handleStart,
+    handlePause,
+    handleResume,
+    handleReset,
+    handleNodesChange,
+    handleEdgesChange,
+    canvas,
+  } = useSimulation(problem)
+
+  const structuralChangesDisabled =
+    simState.status === 'running' || simState.status === 'paused'
 
   return (
     <main className="min-h-screen bg-[var(--bg-primary)]">
@@ -132,40 +110,36 @@ export default function ChallengeBuilderPage({
           simStatus={simState.status}
           balance={simState.balance}
           elapsed={simState.elapsed}
-          onStart={startSimulation}
-          onPause={() =>
-            setSimState((current) => ({ ...current, status: 'paused' }))
-          }
-          onResume={() =>
-            setSimState((current) => ({ ...current, status: 'running' }))
-          }
-          onReset={resetSimulation}
+          onStart={handleStart}
+          onPause={handlePause}
+          onResume={handleResume}
+          onReset={handleReset}
         />
         <div className="flex min-h-0 flex-1">
           <ComponentPalette
             availableComponents={problem.availableComponents}
             disabled={structuralChangesDisabled}
           />
-          <section className="flex min-w-0 flex-1 flex-col">
-            {validationErrors.length > 0 ? (
+          <section className="relative flex min-w-0 flex-1 flex-col">
+            {validationResult && !validationResult.valid ? (
               <div className="bg-slate-100 p-4 dark:bg-slate-900">
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-100">
-                  <p className="font-semibold">Cannot start simulation</p>
-                  <ul className="mt-2 list-disc space-y-1 pl-5">
-                    {validationErrors.map((error) => (
-                      <li key={error}>{error}</li>
-                    ))}
-                  </ul>
-                </div>
+                <ValidationErrors errors={validationResult.errors} />
               </div>
             ) : null}
             <Canvas
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={updateNodes}
-              onEdgesChange={updateEdges}
+              nodes={canvasNodes}
+              edges={canvas.edges}
+              onNodesChange={handleNodesChange}
+              onEdgesChange={handleEdgesChange}
               disabled={structuralChangesDisabled}
             />
+            {simState.status === 'completed' && simState.result ? (
+              <ResultOverlay
+                result={simState.result}
+                problem={problem}
+                onReset={handleReset}
+              />
+            ) : null}
           </section>
           <BuilderSidebar
             simState={simState}

@@ -185,6 +185,50 @@ function toCanvasNodes(nodes: Node<SimulationNodeData>[]): CanvasNode[] {
   }))
 }
 
+/**
+ * hasRuntimeNodeChanges - detects engine-driven visual updates from parent state.
+ */
+function hasRuntimeNodeChanges(
+  flowNodes: Node<SimulationNodeData>[],
+  nodes: CanvasNode[],
+): boolean {
+  if (flowNodes.length !== nodes.length) return false
+
+  return flowNodes.some((flowNode) => {
+    const nextNode = nodes.find((node) => node.instanceId === flowNode.id)
+    if (!nextNode) return false
+
+    return (
+      nextNode.loadPercent !== flowNode.data.node.loadPercent ||
+      nextNode.currentLoadRps !== flowNode.data.node.currentLoadRps ||
+      nextNode.status !== flowNode.data.node.status
+    )
+  })
+}
+
+/**
+ * mergeRuntimeNodeState - keeps React Flow positions while refreshing node data.
+ */
+function mergeRuntimeNodeState(
+  flowNodes: Node<SimulationNodeData>[],
+  nodes: CanvasNode[],
+): Node<SimulationNodeData>[] {
+  return flowNodes.map((flowNode) => {
+    const nextNode = nodes.find((node) => node.instanceId === flowNode.id)
+    if (!nextNode) return flowNode
+
+    return {
+      ...flowNode,
+      data: {
+        node: {
+          ...nextNode,
+          position: flowNode.position,
+        },
+      },
+    }
+  })
+}
+
 function toReactFlowEdge(edge: CanvasEdge): Edge {
   return {
     id: edge.id,
@@ -215,8 +259,15 @@ function CanvasInner({
     if (nodes.length === 0 && flowNodes.length > 0) {
       flowNodesRef.current = []
       setFlowNodes([])
+      return
     }
-  }, [flowNodes.length, nodes.length])
+
+    if (hasRuntimeNodeChanges(flowNodes, nodes)) {
+      const updated = mergeRuntimeNodeState(flowNodes, nodes)
+      flowNodesRef.current = updated
+      setFlowNodes(updated)
+    }
+  }, [flowNodes, nodes])
 
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
