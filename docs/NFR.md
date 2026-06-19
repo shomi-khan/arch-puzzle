@@ -17,7 +17,7 @@
 
 - The entire codebase must use **TypeScript**.
 - No `any` types. All props, state, engine outputs, and config must be fully typed.
-- Shared types must live in a central `types/` or `src/types.ts` file.
+- Shared types must live in a central `src/types/index.ts` file.
 
 ## 4. Performance
 
@@ -32,9 +32,9 @@
 
 ## 6. Portability
 
-- The game must be **decoupled from the portfolio app**.
-- It must be possible to extract this project into a standalone Next.js app with zero changes to game logic or components.
-- No imports should reference portfolio-specific paths or globals.
+- The game must be a **fully standalone Next.js application**.
+- No external dependencies on other projects, codebases, or monorepos.
+- It must be possible to clone the repo, run `npm i && npm run dev`, and have the game running immediately.
 
 ## 7. Scalability (Content)
 
@@ -58,3 +58,19 @@
 - A challenge is **locked** until its prerequisite challenge is solved.
 - Solved state persists in **localStorage** — no backend needed.
 - The first challenge is always unlocked (`unlocksAfter: null`).
+
+## 11. Visual Design
+
+- The UI must follow a **Terminal OS aesthetic** — dark background always, monospace font throughout, no light mode.
+- Background: `#0a0f1a` (page), `#0f172a` (panels), `#060b14` (canvas).
+- Font: monospace everywhere — labels, values, logs, buttons.
+- **No color-based component distinction** in the palette. Components are distinguished by their lucide-react icon only.
+- **Load bar color** must reflect node status dynamically:
+  - 0–60% load → green (`#4ade80`)
+  - 61–89% load → amber (`#fbbf24`)
+  - 90%+ load → red (`#ef4444`), with a pulse animation
+- **Blinking cursor** (`█`) must appear at the end of the terminal log while simulation is running. Stops blinking when simulation completes.
+- The challenge list page uses a **terminal list pattern** — single column, monospace rows, status on the right.
+- The result summary page uses a **left-right split**:
+  - Left: score (large), requirements checklist, metric grid, action buttons
+  - Right: full simulation log (continued from builder) + XP earned at bottom
