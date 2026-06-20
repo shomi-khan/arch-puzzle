@@ -11,7 +11,7 @@
  * Progress (locked/unlocked) is read from localStorage — browser only.
  */
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getProblemById, getPrerequisite } from '@/problems'
 import { isUnlocked } from '@/lib/progress'
@@ -19,8 +19,8 @@ import MobileBlock from '@/components/simulation/MobileBlock'
 import Button from '@/components/ui/Button'
 
 interface BuilderPageProps {
-  /** Challenge ID from URL param */
-  params: { id: string }
+  /** Challenge ID from URL param (Promise in Next.js 16+) */
+  params: Promise<{ id: string }>
 }
 
 type PageState = 'loading' | 'not-found' | 'locked' | 'ready'
@@ -32,12 +32,13 @@ type PageState = 'loading' | 'not-found' | 'locked' | 'ready'
  */
 export default function BuilderPage({ params }: BuilderPageProps) {
   const router = useRouter()
+  const { id } = use(params)
   const [pageState, setPageState] = useState<PageState>('loading')
   const [prerequisiteTitle, setPrerequisiteTitle] = useState<string>('')
 
   // Check unlock status on mount
   useEffect(() => {
-    const foundProblem = getProblemById(params.id)
+    const foundProblem = getProblemById(id)
     if (!foundProblem) {
       setPageState('not-found')
       return
@@ -51,7 +52,7 @@ export default function BuilderPage({ params }: BuilderPageProps) {
     }
 
     setPageState('ready')
-  }, [params.id])
+  }, [id])
 
   // Not found state
   if (pageState === 'not-found') {
@@ -135,7 +136,7 @@ export default function BuilderPage({ params }: BuilderPageProps) {
   }
 
   // Ready state - render builder with hook
-  return <ChallengeBuilder problemId={params.id} />
+  return <ChallengeBuilder problemId={id} />
 }
 
 // ── Separate component that uses the hook ────────────────────────────────────
