@@ -15,15 +15,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getProblemById, getPrerequisite } from '@/problems'
 import { isUnlocked } from '@/lib/progress'
-import { useSimulation } from '@/hooks/useSimulation'
-import Canvas from '@/components/simulation/Canvas'
-import ComponentPalette from '@/components/simulation/ComponentPalette'
 import MobileBlock from '@/components/simulation/MobileBlock'
-import ProblemHeader from '@/components/simulation/ProblemHeader'
-import MetricsRow from '@/components/simulation/MetricsRow'
-import TerminalSidebar from '@/components/simulation/TerminalSidebar'
-import ValidationErrors from '@/components/simulation/ValidationErrors'
-import ResultSummary from '@/components/simulation/ResultSummary'
 import Button from '@/components/ui/Button'
 
 interface BuilderPageProps {
@@ -35,26 +27,13 @@ type PageState = 'loading' | 'not-found' | 'locked' | 'ready'
 
 /**
  * BuilderPage - main challenge builder and simulation runner.
+ * Uses conditional rendering to only load the builder (with useSimulation hook)
+ * after authentication checks pass.
  */
 export default function BuilderPage({ params }: BuilderPageProps) {
   const router = useRouter()
   const [pageState, setPageState] = useState<PageState>('loading')
   const [prerequisiteTitle, setPrerequisiteTitle] = useState<string>('')
-
-  const problem = pageState === 'ready' ? getProblemById(params.id) : null
-
-  const {
-    simState,
-    canvasNodes,
-    validationResult,
-    handleStart,
-    handlePause,
-    handleResume,
-    handleReset,
-    handleNodesChange,
-    handleEdgesChange,
-    canvas,
-  } = useSimulation(problem!)
 
   // Check unlock status on mount
   useEffect(() => {
@@ -139,7 +118,7 @@ export default function BuilderPage({ params }: BuilderPageProps) {
   }
 
   // Loading state
-  if (pageState === 'loading' || !problem) {
+  if (pageState === 'loading') {
     return (
       <div
         className="flex min-h-screen items-center justify-center"
@@ -155,7 +134,49 @@ export default function BuilderPage({ params }: BuilderPageProps) {
     )
   }
 
-  // Ready state - full builder
+  // Ready state - render builder with hook
+  return <ChallengeBuilder problemId={params.id} />
+}
+
+// ── Separate component that uses the hook ────────────────────────────────────
+
+import { useSimulation } from '@/hooks/useSimulation'
+import Canvas from '@/components/simulation/Canvas'
+import ComponentPalette from '@/components/simulation/ComponentPalette'
+import ProblemHeader from '@/components/simulation/ProblemHeader'
+import MetricsRow from '@/components/simulation/MetricsRow'
+import TerminalSidebar from '@/components/simulation/TerminalSidebar'
+import ValidationErrors from '@/components/simulation/ValidationErrors'
+import ResultSummary from '@/components/simulation/ResultSummary'
+
+interface ChallengeBuilderProps {
+  problemId: string
+}
+
+/**
+ * ChallengeBuilder — nested component that loads the hook only after
+ * authentication checks pass. This prevents calling hooks with null data.
+ */
+function ChallengeBuilder({ problemId }: ChallengeBuilderProps) {
+  const problem = getProblemById(problemId)
+
+  if (!problem) {
+    return null // Safety check, though shouldn't happen if parent validates
+  }
+
+  const {
+    simState,
+    canvasNodes,
+    validationResult,
+    handleStart,
+    handlePause,
+    handleResume,
+    handleReset,
+    handleNodesChange,
+    handleEdgesChange,
+    canvas,
+  } = useSimulation(problem)
+
   return (
     <>
       {/* Mobile block */}
