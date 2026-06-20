@@ -1,7 +1,7 @@
 # Step 8 — Result Summary
 
 ## Context
-You are continuing to build **arch-quest** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
+You are continuing to build **arch-puzzle** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
 
 Steps 1–7 are complete. Types, config, shared UI, problem data, engine, challenge list, canvas builder, and simulation runner all exist.
 

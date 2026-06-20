@@ -1,7 +1,7 @@
 # Step 5 — Challenge List Page (SSR)
 
 ## Context
-You are continuing to build **arch-quest** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
+You are continuing to build **arch-puzzle** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
 
 Steps 1–4 are complete. Types, config, shared UI components, problem data layer, progress tracking, and simulation engine all exist.
 
@@ -49,12 +49,12 @@ src/components/simulation/ChallengeList.tsx ← new Client Component
 
 ### Nav bar
 ```
-arch-quest  |  system design playground
+arch-puzzle  |  system design playground
 ```
 - Background: `#0f172a`
 - Border bottom: `0.5px solid #1e293b`
 - Sticky, `z-10`
-- Left: `arch-quest` in accent blue (`#378ADD`) + `system design playground` in dim text
+- Left: `arch-puzzle` in accent blue (`#378ADD`) + `system design playground` in dim text
 - Right: empty for MVP
 - Height: `h-12`
 - Font: monospace
@@ -108,7 +108,7 @@ experience.
 ### Metadata
 ```ts
 export const metadata = {
-  title: 'arch-quest — system design challenges',
+  title: 'arch-puzzle — system design challenges',
   description: 'Learn distributed systems by building and simulating real architectures.',
 }
 ```

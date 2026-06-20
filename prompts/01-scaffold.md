@@ -1,7 +1,7 @@
 # Step 1 — Project Scaffold & Folder Structure
 
 ## Context
-You are building **arch-quest** — a standalone system design simulation game.
+You are building **arch-puzzle** — a standalone system design simulation game.
 Users learn distributed systems by dragging infrastructure components onto a canvas, building architectures, and running a mathematical simulation to observe system behavior.
 
 Deployed on **Vercel** as a standalone Next.js application.
@@ -18,7 +18,7 @@ The project must be ready to run with `npm i && npm run dev` — no CLI scaffold
 ### `package.json`
 ```json
 {
-  "name": "arch-quest",
+  "name": "arch-puzzle",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -79,7 +79,7 @@ The project must be ready to run with `npm i && npm run dev` — no CLI scaffold
 /**
  * next.config.ts
  *
- * Next.js configuration for arch-quest.
+ * Next.js configuration for arch-puzzle.
  * Deployed on Vercel — standard Next.js deployment.
  * No `output: 'export'` needed — Vercel handles SSR natively.
  */
@@ -180,7 +180,7 @@ Thumbs.db
 /*
  * globals.css
  *
- * Global styles for arch-quest.
+ * Global styles for arch-puzzle.
  * Terminal OS aesthetic — dark background always, no light mode.
  * All color tokens defined here as CSS variables.
  */
@@ -236,7 +236,7 @@ html, body {
 /**
  * src/app/layout.tsx
  *
- * Root layout for arch-quest.
+ * Root layout for arch-puzzle.
  * Applies monospace font globally — terminal OS aesthetic.
  */
 
@@ -250,7 +250,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'arch-quest',
+  title: 'arch-puzzle',
   description: 'Learn distributed systems by building and simulating real architectures.',
 }
 
@@ -332,7 +332,7 @@ src/
 /**
  * src/types/index.ts
  *
- * Central type definitions for arch-quest.
+ * Central type definitions for arch-puzzle.
  * All interfaces, enums, and type aliases live here.
  * No logic. No imports from other src files.
  */
