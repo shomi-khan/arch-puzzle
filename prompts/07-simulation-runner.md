@@ -1,7 +1,7 @@
 # Step 7 — Simulation Runner (Game Loop, State Management)
 
 ## Context
-You are continuing to build **arch-lab** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
+You are continuing to build **arch-quest** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
 
 Steps 1–6 are complete. Types, config, shared UI, problem data, engine, challenge list page, and canvas builder all exist.
 

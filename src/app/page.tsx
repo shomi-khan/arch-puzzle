@@ -16,7 +16,7 @@ import MobileBlock from '@/components/simulation/MobileBlock'
 import { problems } from '@/problems'
 
 export const metadata = {
-  title: 'arch-lab — system design challenges',
+  title: 'arch-quest — system design challenges',
   description: 'Learn distributed systems by building and simulating real architectures.',
 }
 

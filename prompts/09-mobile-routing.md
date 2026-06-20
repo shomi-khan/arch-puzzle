@@ -1,7 +1,7 @@
 # Step 9 — Mobile Block, Routing, Final Wiring & Polish
 
 ## Context
-You are continuing to build **arch-lab** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
+You are continuing to build **arch-quest** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
 
 Steps 1–8 are complete. The entire game is functionally built — engine, canvas, simulation loop, and result summary all exist.
 
@@ -78,7 +78,7 @@ page not found.
 
 ### Nav bar
 ```
-arch-lab  |  system design playground
+arch-quest  |  system design playground
 ```
 
 ```tsx
@@ -88,7 +88,7 @@ arch-lab  |  system design playground
   flex items-center px-6
 ">
   <span className="text-[#378ADD] text-sm font-mono font-medium">
-    arch-lab
+    arch-quest
   </span>
   <span className="text-[#1e293b] mx-3 text-xs">|</span>
   <span className="text-[#334155] text-xs font-mono">
@@ -287,7 +287,7 @@ return (
 /**
  * next.config.ts
  *
- * Next.js configuration for arch-lab.
+ * Next.js configuration for arch-quest.
  * Deployed on Vercel — standard Next.js deployment.
  * No `output: 'export'` needed — Vercel handles SSR natively.
  */

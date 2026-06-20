@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             style={{ backgroundColor: '#0f172a', borderBottom: '0.5px solid #1e293b' }}
           >
             <span className="text-sm font-semibold" style={{ color: '#378ADD' }}>
-              arch-lab
+              arch-quest
             </span>
             <span className="ml-2 text-xs" style={{ color: '#475569' }}>
               system design playground
