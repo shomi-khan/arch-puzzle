@@ -3,114 +3,46 @@
 /**
  * src/app/sys-simulation/[id]/page.tsx
  *
- * Builder page - final wired version.
- *
- * Edge cases handled:
- * 1. Problem not found (invalid id in URL) -> show not-found UI
- * 2. Problem locked (prerequisite not solved) -> show locked UI
- * 3. Problem found and unlocked -> show full builder
+ * Builder page — where the user constructs their architecture and runs simulation.
  *
  * WHY CLIENT COMPONENT:
- * React Flow requires browser APIs. Simulation state runs via setInterval.
- * Progress (locked/unlocked) is read from localStorage - browser only.
- * All three requirements make this a mandatory Client Component.
+ * React Flow requires browser APIs (drag events, pointer events, ResizeObserver).
+ * Simulation state runs via setInterval — server cannot run this.
+ * Progress (locked/unlocked) is read from localStorage — browser only.
  */
 
-import { use } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { getProblemById, getPrerequisite } from '@/problems'
+import { isUnlocked } from '@/lib/progress'
+import { useSimulation } from '@/hooks/useSimulation'
 import Canvas from '@/components/simulation/Canvas'
-import BuilderSidebar from '@/components/simulation/BuilderSidebar'
 import ComponentPalette from '@/components/simulation/ComponentPalette'
 import MobileBlock from '@/components/simulation/MobileBlock'
 import ProblemHeader from '@/components/simulation/ProblemHeader'
-import { ResultOverlay } from '@/components/simulation/ResultOverlay'
-import { ValidationErrors } from '@/components/simulation/ValidationErrors'
+import MetricsRow from '@/components/simulation/MetricsRow'
+import TerminalSidebar from '@/components/simulation/TerminalSidebar'
+import ValidationErrors from '@/components/simulation/ValidationErrors'
+import ResultSummary from '@/components/simulation/ResultSummary'
 import Button from '@/components/ui/Button'
-import { useSimulation } from '@/hooks/useSimulation'
-import { isUnlocked } from '@/lib/progress'
-import { getProblemById } from '@/problems'
 
-interface ChallengeBuilderPageProps {
-  /** Dynamic route params from /sys-simulation/[id] */
-  params: Promise<{
-    /** Problem id from the URL */
-    id: string
-  }>
+interface BuilderPageProps {
+  /** Challenge ID from URL param */
+  params: { id: string }
 }
 
+type PageState = 'loading' | 'not-found' | 'locked' | 'ready'
+
 /**
- * ChallengeBuilderPage - resolves challenge route state and renders the builder.
+ * BuilderPage - main challenge builder and simulation runner.
  */
-export default function ChallengeBuilderPage({
-  params,
-}: ChallengeBuilderPageProps) {
-  const { id } = use(params)
+export default function BuilderPage({ params }: BuilderPageProps) {
   const router = useRouter()
-  const problem = getProblemById(id)
+  const [pageState, setPageState] = useState<PageState>('loading')
+  const [prerequisiteTitle, setPrerequisiteTitle] = useState<string>('')
 
-  if (!problem) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-        <div className="mb-4 text-4xl" aria-hidden="true">
-          🔍
-        </div>
-        <h2 className="mb-2 text-xl font-semibold text-[var(--text-primary)]">
-          Challenge not found
-        </h2>
-        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-          The challenge you are looking for does not exist.
-        </p>
-        <Button
-          variant="secondary"
-          icon={<ArrowLeft size={16} />}
-          onClick={() => router.push('/sys-simulation')}
-        >
-          Back to Challenges
-        </Button>
-      </div>
-    )
-  }
+  const problem = pageState === 'ready' ? getProblemById(params.id) : null
 
-  if (!isUnlocked(problem)) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-        <div className="mb-4 text-4xl" aria-hidden="true">
-          🔒
-        </div>
-        <h2 className="mb-2 text-xl font-semibold text-[var(--text-primary)]">
-          Challenge locked
-        </h2>
-        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-          Complete{' '}
-          <span className="font-medium text-slate-700 dark:text-slate-300">
-            {problem.unlocksAfter}
-          </span>{' '}
-          first to unlock this challenge.
-        </p>
-        <Button
-          variant="secondary"
-          icon={<ArrowLeft size={16} />}
-          onClick={() => router.push('/sys-simulation')}
-        >
-          Back to Challenges
-        </Button>
-      </div>
-    )
-  }
-
-  return <ChallengeBuilder problem={problem} />
-}
-
-interface ChallengeBuilderProps {
-  /** Challenge loaded from the problem registry */
-  problem: NonNullable<ReturnType<typeof getProblemById>>
-}
-
-/**
- * ChallengeBuilder - wires simulation state into the builder layout.
- */
-function ChallengeBuilder({ problem }: ChallengeBuilderProps) {
   const {
     simState,
     canvasNodes,
@@ -122,18 +54,121 @@ function ChallengeBuilder({ problem }: ChallengeBuilderProps) {
     handleNodesChange,
     handleEdgesChange,
     canvas,
-  } = useSimulation(problem)
+  } = useSimulation(problem!)
 
-  const structuralChangesDisabled =
-    simState.status === 'running' || simState.status === 'paused'
+  // Check unlock status on mount
+  useEffect(() => {
+    const foundProblem = getProblemById(params.id)
+    if (!foundProblem) {
+      setPageState('not-found')
+      return
+    }
 
+    if (!isUnlocked(foundProblem)) {
+      const prerequisite = getPrerequisite(foundProblem)
+      setPrerequisiteTitle(prerequisite?.title || 'Unknown')
+      setPageState('locked')
+      return
+    }
+
+    setPageState('ready')
+  }, [params.id])
+
+  // Not found state
+  if (pageState === 'not-found') {
+    return (
+      <div
+        className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
+        style={{ backgroundColor: '#0a0f1a' }}
+      >
+        <div className="max-w-md">
+          <h2
+            className="font-mono text-xs uppercase tracking-widest mb-6"
+            style={{ color: '#334155' }}
+          >
+            // challenge not found
+          </h2>
+          <p
+            className="text-sm mb-8 leading-relaxed"
+            style={{ color: '#475569' }}
+          >
+            the id you requested does not exist.
+          </p>
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/sys-simulation')}
+          >
+            ← back to challenges
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Locked state
+  if (pageState === 'locked') {
+    return (
+      <div
+        className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
+        style={{ backgroundColor: '#0a0f1a' }}
+      >
+        <div className="max-w-md">
+          <h2
+            className="font-mono text-xs uppercase tracking-widest mb-6"
+            style={{ color: '#334155' }}
+          >
+            // challenge locked
+          </h2>
+          <p
+            className="text-sm mb-8 leading-relaxed"
+            style={{ color: '#475569' }}
+          >
+            complete &quot;<span style={{ color: '#94a3b8' }}>
+              {prerequisiteTitle}
+            </span>&quot; first.
+          </p>
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/sys-simulation')}
+          >
+            ← back to challenges
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Loading state
+  if (pageState === 'loading' || !problem) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ backgroundColor: '#0a0f1a' }}
+      >
+        <div
+          className="font-mono text-xs"
+          style={{ color: '#475569' }}
+        >
+          loading...
+        </div>
+      </div>
+    )
+  }
+
+  // Ready state - full builder
   return (
     <>
+      {/* Mobile block */}
       <div className="block lg:hidden">
         <MobileBlock />
       </div>
 
-      <div className="hidden h-screen flex-col overflow-hidden lg:flex">
+      {/* Full builder — desktop only */}
+      <div
+        className="hidden lg:flex flex-col h-screen overflow-hidden"
+        style={{ backgroundColor: '#0a0f1a' }}
+      >
+        {/* Top bar: title + controls */}
         <ProblemHeader
           problem={problem}
           simStatus={simState.status}
@@ -145,41 +180,62 @@ function ChallengeBuilder({ problem }: ChallengeBuilderProps) {
           onReset={handleReset}
         />
 
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <ComponentPalette
-            availableComponents={problem.availableComponents}
-            disabled={structuralChangesDisabled}
-          />
+        {/* Metrics row: full width below header */}
+        <MetricsRow simState={simState} initialBudget={problem.initialBudget} />
 
-          <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-            {validationResult && !validationResult.valid ? (
-              <div className="px-4 pt-3">
-                <ValidationErrors errors={validationResult.errors} />
-              </div>
-            ) : null}
+        {/* Main area: palette + canvas + terminal */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left: component palette */}
+          <div
+            className="w-[130px] flex-shrink-0 overflow-y-auto p-2"
+            style={{ borderRight: '1px solid #131b28', backgroundColor: '#0a0f1a' }}
+          >
+            <ComponentPalette
+              availableComponents={problem.availableComponents}
+              disabled={
+                simState.status === 'running' || simState.status === 'paused'
+              }
+            />
+          </div>
 
-            <div className="relative flex-1">
+          {/* Center: canvas + validation errors */}
+          <div className="flex-1 flex flex-col relative overflow-hidden">
+            {validationResult && !validationResult.valid && (
+              <ValidationErrors errors={validationResult.errors} />
+            )}
+            <div className="flex-1 relative">
               <Canvas
                 nodes={canvasNodes}
                 edges={canvas.edges}
                 onNodesChange={handleNodesChange}
                 onEdgesChange={handleEdgesChange}
-                disabled={structuralChangesDisabled}
+                disabled={
+                  simState.status === 'running' ||
+                  simState.status === 'paused'
+                }
               />
-              {simState.status === 'completed' && simState.result ? (
-                <ResultOverlay
+              {/* Result overlay when simulation completes */}
+              {simState.status === 'completed' && simState.result && (
+                <ResultSummary
                   result={simState.result}
                   problem={problem}
+                  logs={simState.logs}
                   onReset={handleReset}
                 />
-              ) : null}
+              )}
             </div>
           </div>
 
-          <BuilderSidebar
-            simState={simState}
-            initialBudget={problem.initialBudget}
-          />
+          {/* Right: terminal log — full height */}
+          <div
+            className="w-[220px] flex-shrink-0"
+            style={{ borderLeft: '1px solid #131b28' }}
+          >
+            <TerminalSidebar
+              logs={simState.logs}
+              simStatus={simState.status}
+            />
+          </div>
         </div>
       </div>
     </>

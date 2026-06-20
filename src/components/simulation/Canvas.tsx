@@ -25,7 +25,6 @@ import {
   Controls,
   Handle,
   MarkerType,
-  MiniMap,
   Position,
   ReactFlow,
   ReactFlowProvider,
@@ -78,13 +77,13 @@ interface SimulationNodeData {
 }
 
 const categoryBorderStyles: Record<ComponentCategory, string> = {
-  network: 'border-blue-400',
-  compute: 'border-green-400',
-  cache: 'border-red-400',
-  database: 'border-purple-400',
-  cdn: 'border-amber-400',
-  queue: 'border-orange-400',
-  security: 'border-pink-400',
+  network: '#378ADD',
+  compute: '#4ade80',
+  cache: '#ef4444',
+  database: '#a78bfa',
+  cdn: '#f59e0b',
+  queue: '#fb923c',
+  security: '#ec4899',
 }
 
 const iconMap: Record<string, ComponentType<{ size?: number }>> = {
@@ -99,9 +98,9 @@ const iconMap: Record<string, ComponentType<{ size?: number }>> = {
 }
 
 function loadBarColor(loadPercent: number): string {
-  if (loadPercent >= 90) return 'bg-red-500'
-  if (loadPercent >= 61) return 'bg-amber-400'
-  return 'bg-green-400'
+  if (loadPercent >= 90) return '#ef4444'
+  if (loadPercent >= 61) return '#fbbf24'
+  return '#4ade80'
 }
 
 /**
@@ -114,35 +113,46 @@ function SimulationNode({ data }: NodeProps<SimulationNodeData>) {
   if (!component) return null
 
   const Icon = iconMap[component.type]
+  const borderColor = categoryBorderStyles[component.category]
 
   return (
     <div
-      className={`min-w-[140px] rounded-xl border-2 bg-white p-3 shadow-sm dark:bg-slate-800 ${categoryBorderStyles[component.category]}`}
+      style={{
+        minWidth: '120px',
+        borderRadius: '0.375rem',
+        backgroundColor: '#0f172a',
+        border: `1.5px solid ${borderColor}`,
+        padding: '0.75rem',
+        fontFamily: 'monospace',
+      }}
     >
       <Handle type="target" position={Position.Left} />
-      <div className="flex items-center gap-2">
-        <span className="text-slate-500 dark:text-slate-300">
-          {Icon ? <Icon size={16} /> : null}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span style={{ color: '#64748b', fontSize: '13px' }}>
+          {Icon ? <Icon size={13} /> : null}
         </span>
-        <span className="text-sm font-medium text-[var(--text-primary)]">
+        <span style={{ fontSize: '11px', color: '#e2e8f0', textTransform: 'lowercase' }}>
           {component.label}
         </span>
       </div>
-      {data.node.status !== 'idle' ? (
-        <div className="mt-3 flex items-center gap-2">
-          <div className="h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700">
+      {data.node.status !== 'idle' && (
+        <div style={{ marginTop: '0.75rem' }}>
+          <div style={{ height: '0.25rem', borderRadius: '9999px', backgroundColor: '#1e293b', overflow: 'hidden' }}>
             <div
-              className={`h-1.5 rounded-full ${loadBarColor(data.node.loadPercent)}`}
               style={{
+                height: '0.25rem',
+                borderRadius: '9999px',
+                backgroundColor: loadBarColor(data.node.loadPercent),
                 width: `${Math.min(100, Math.max(0, data.node.loadPercent))}%`,
+                transition: 'width 500ms',
               }}
             />
           </div>
-          <span className="w-8 text-right text-xs text-[var(--text-secondary)]">
-            {Math.round(data.node.loadPercent)}%
+          <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '0.25rem', display: 'block' }}>
+            {Math.round(data.node.loadPercent)}% · {data.node.status}
           </span>
         </div>
-      ) : null}
+      )}
       <Handle type="source" position={Position.Right} />
     </div>
   )
@@ -369,7 +379,11 @@ function CanvasInner({
 
   return (
     <div
-      className="h-full flex-1 bg-slate-100 dark:bg-slate-900"
+      style={{
+        height: '100%',
+        flex: 1,
+        backgroundColor: '#060b14',
+      }}
     >
       <ReactFlow
         nodes={flowNodes}
@@ -384,18 +398,13 @@ function CanvasInner({
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         fitView
+        defaultEdgeOptions={{
+          style: { stroke: '#334155', strokeWidth: 1 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#475569' },
+        }}
       >
-        <Background />
+        <Background color="#1e293b" />
         <Controls />
-        <MiniMap
-          nodeColor={(node) => {
-            const status = (node.data as SimulationNodeData | undefined)?.node
-              .status
-            if (status === 'warning') return '#fbbf24'
-            if (status === 'overloaded') return '#f87171'
-            return '#4ade80'
-          }}
-        />
       </ReactFlow>
     </div>
   )

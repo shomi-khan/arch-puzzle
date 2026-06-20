@@ -74,14 +74,29 @@ export default function ComponentPalette({
 
   return (
     <aside
-      className={`w-64 shrink-0 overflow-y-auto border-r border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 ${
-        disabled ? 'pointer-events-none opacity-50' : ''
-      }`}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        opacity: disabled ? 0.5 : 1,
+        pointerEvents: disabled ? 'none' : 'auto',
+      }}
     >
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
-        Components
-      </h2>
-      <div className="space-y-3">
+      {/* Header */}
+      <div
+        style={{
+          fontSize: '9px',
+          color: '#334155',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          marginBottom: '0.5rem',
+        }}
+      >
+        // components
+      </div>
+
+      {/* Items */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {components.map((component) => {
           const Icon = iconMap[component.type]
 
@@ -90,23 +105,55 @@ export default function ComponentPalette({
               key={component.type}
               draggable={!disabled}
               onDragStart={(event) => handleDragStart(event, component.type)}
-              className={`select-none rounded-lg border border-l-4 border-slate-200 bg-white p-3 transition-shadow hover:border-slate-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600 ${categoryBorderStyles[component.category]} ${
-                disabled ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'
-              }`}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.5rem',
+                padding: '0.5rem',
+                borderRadius: '0.25rem',
+                backgroundColor: '#1e293b',
+                border: '0.5px solid #334155',
+                cursor: disabled ? 'not-allowed' : 'grab',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                if (!disabled) {
+                  e.currentTarget.style.borderColor = '#475569'
+                  e.currentTarget.style.backgroundColor = '#263244'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!disabled) {
+                  e.currentTarget.style.borderColor = '#334155'
+                  e.currentTarget.style.backgroundColor = '#1e293b'
+                }
+              }}
             >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 text-slate-500 dark:text-slate-300">
-                  {Icon ? <Icon size={18} /> : null}
+              {Icon && (
+                <div style={{ color: '#64748b', marginTop: '2px', flexShrink: 0 }}>
+                  <Icon size={13} />
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-[var(--text-primary)]">
-                    {component.label}
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                    ${component.purchaseCost.toLocaleString()} · $
-                    {component.runtimeCostPerSecond}/s
-                  </p>
-                </div>
+              )}
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p
+                  style={{
+                    fontSize: '11px',
+                    color: '#94a3b8',
+                    textTransform: 'lowercase',
+                    margin: 0,
+                  }}
+                >
+                  {component.label}
+                </p>
+                <p
+                  style={{
+                    fontSize: '10px',
+                    color: '#475569',
+                    margin: '2px 0 0 0',
+                  }}
+                >
+                  ${component.purchaseCost.toLocaleString()} · ${component.runtimeCostPerSecond}/s
+                </p>
               </div>
             </div>
           )

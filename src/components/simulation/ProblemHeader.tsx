@@ -3,17 +3,13 @@
 /**
  * src/components/simulation/ProblemHeader.tsx
  *
- * Top bar of the builder page - shows problem context and simulation controls.
- *
- * WHY THIS EXISTS:
- * The user needs to see the problem title, difficulty, remaining budget,
- * elapsed time, and simulation controls at all times while building.
+ * Top bar of the builder page.
+ * Shows problem title, difficulty, elapsed timer, and simulation controls.
+ * Controls are always visible — Start/Pause/Resume/Reset depending on status.
  */
 
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import type { Problem, SimulationState } from '@/types'
-import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 
 interface ProblemHeaderProps {
@@ -41,11 +37,12 @@ function formatTimer(seconds: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
-function balanceColor(balance: number, initialBudget: number): string {
-  const ratio = balance / initialBudget
-  if (ratio > 0.5) return 'text-green-600 dark:text-green-400'
-  if (ratio >= 0.2) return 'text-amber-600 dark:text-amber-400'
-  return 'text-red-600 dark:text-red-400'
+const difficultyColors: Record<string, { bg: string; text: string }> = {
+  beginner: { bg: '#0d2a0d', text: '#4ade80' },
+  easy: { bg: '#0a2a20', text: '#34d399' },
+  medium: { bg: '#2a1f0d', text: '#f59e0b' },
+  hard: { bg: '#2a1500', text: '#fb923c' },
+  expert: { bg: '#2a0d0d', text: '#ef4444' },
 }
 
 /**
@@ -61,64 +58,92 @@ export default function ProblemHeader({
   onResume,
   onReset,
 }: ProblemHeaderProps) {
-  return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-5 dark:border-slate-800 dark:bg-slate-950">
-      <Link
-        href="/sys-simulation"
-        className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-      >
-        <ArrowLeft size={16} />
-        Back
-      </Link>
+  const diffColors = difficultyColors[problem.difficulty]
 
-      <div className="flex items-center gap-3">
-        <h1 className="text-base font-semibold text-[var(--text-primary)]">
-          {problem.title}
-        </h1>
-        <Badge label={problem.difficulty} variant={problem.difficulty} />
+  return (
+    <header
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: '48px',
+        backgroundColor: '#0f172a',
+        borderBottom: '0.5px solid #1e293b',
+        padding: '0 1rem',
+        fontFamily: 'monospace',
+        fontSize: '12px',
+      }}
+    >
+      {/* Left section */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <Link
+          href="/sys-simulation"
+          style={{
+            color: '#475569',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#94a3b8')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#475569')}
+        >
+          ← challenges
+        </Link>
+        <div style={{ color: '#1e293b' }}>|</div>
+        <span style={{ color: '#94a3b8' }}>{problem.title}</span>
+        <div
+          style={{
+            backgroundColor: diffColors.bg,
+            color: diffColors.text,
+            padding: '0.25rem 0.5rem',
+            borderRadius: '0.25rem',
+            fontSize: '10px',
+            fontFamily: 'monospace',
+          }}
+        >
+          {problem.difficulty}
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="text-right">
-          <p className={`text-sm font-semibold ${balanceColor(balance, problem.initialBudget)}`}>
-            ${balance.toLocaleString()}
-          </p>
-          <p className="text-xs text-[var(--text-secondary)]">balance</p>
-        </div>
-        <div className="font-mono text-sm font-medium text-[var(--text-primary)]">
+      {/* Right section */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <div style={{ color: '#475569', fontFamily: 'monospace' }}>
           {formatTimer(elapsed)}
         </div>
-        <div className="flex items-center gap-2">
-          {simStatus === 'idle' ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {simStatus === 'idle' && (
             <Button variant="primary" onClick={onStart}>
-              Start
+              ▶ start
             </Button>
-          ) : null}
-          {simStatus === 'running' ? (
+          )}
+          {simStatus === 'running' && (
             <>
               <Button variant="secondary" onClick={onPause}>
-                Pause
+                ⏸ pause
               </Button>
               <Button variant="ghost" onClick={onReset}>
-                Reset
+                ↺ reset
               </Button>
             </>
-          ) : null}
-          {simStatus === 'paused' ? (
+          )}
+          {simStatus === 'paused' && (
             <>
               <Button variant="primary" onClick={onResume}>
-                Resume
+                ▶ resume
               </Button>
               <Button variant="ghost" onClick={onReset}>
-                Reset
+                ↺ reset
               </Button>
             </>
-          ) : null}
-          {simStatus === 'completed' ? (
-            <Button variant="secondary" onClick={onReset}>
-              Reset
+          )}
+          {simStatus === 'completed' && (
+            <Button variant="ghost" onClick={onReset}>
+              ↺ reset
             </Button>
-          ) : null}
+          )}
         </div>
       </div>
     </header>

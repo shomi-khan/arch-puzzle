@@ -16,16 +16,32 @@ interface ValidationErrorsProps {
 /**
  * ValidationErrors - renders pre-simulation architecture errors.
  */
-export function ValidationErrors({ errors }: ValidationErrorsProps) {
+export default function ValidationErrors({ errors }: ValidationErrorsProps) {
   return (
-    <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-700 dark:bg-amber-900/20">
-      <div className="mb-2 font-medium text-amber-800 dark:text-amber-300">
-        Cannot start simulation
+    <div
+      style={{
+        margin: '0.75rem',
+        padding: '0.75rem',
+        borderRadius: '0.25rem',
+        backgroundColor: '#1a1200',
+        border: '0.5px solid #2a1f00',
+        fontSize: '12px',
+        fontFamily: 'monospace',
+      }}
+    >
+      <div
+        style={{
+          marginBottom: '0.5rem',
+          fontWeight: 600,
+          color: '#d97706',
+        }}
+      >
+        // cannot start
       </div>
-      <ul className="space-y-1">
+      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#d97706' }}>
         {errors.map((error) => (
-          <li key={error.code} className="text-amber-700 dark:text-amber-400">
-            {error.message}
+          <li key={error.code} style={{ marginBottom: '0.25rem', fontSize: '11px' }}>
+            • {error.message}
           </li>
         ))}
       </ul>
