@@ -1,11 +1,11 @@
-# Step 8 — Result Report Page
+# Step 8 — Result Summary
 
 ## Context
-You are continuing to build **sys-simulation** — a system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
+You are continuing to build **arch-lab** — a standalone system design simulation game built with Next.js, TypeScript, and Tailwind CSS.
 
 Steps 1–7 are complete. Types, config, shared UI, problem data, engine, challenge list, canvas builder, and simulation runner all exist.
 
-Now implement the **result report** — the full post-simulation screen that replaces the placeholder `ResultOverlay` from Step 7.
+Now implement the **result summary** — the full post-simulation screen that overlays the canvas when simulation completes.
 
 ---
 
@@ -13,147 +13,232 @@ Now implement the **result report** — the full post-simulation screen that rep
 
 - TypeScript only. No `any`.
 - Client Component — `'use client'` at top.
+- **Terminal OS aesthetic** — dark always, monospace everywhere.
 - Every component must have a top-level JSDoc comment.
 - Every prop must have an inline comment.
-- Dark/light via `prefers-color-scheme` — no toggle.
 
 ---
 
 ## Files to create or update
 
 ```
-src/components/simulation/ResultOverlay.tsx     ← replace Step 7 placeholder, full implementation
-src/components/simulation/ReportCard.tsx        ← implement fully
-src/components/simulation/SuccessConditions.tsx ← new component
+src/components/simulation/ResultSummary.tsx      ← replace placeholder, full implementation
+src/components/simulation/SuccessConditions.tsx  ← new component
 ```
 
 ---
 
-## `src/components/simulation/ResultOverlay.tsx` — replace placeholder, implement fully
+## Layout overview
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  backdrop: bg-black/70 backdrop-blur-sm                 │
+│  ┌──────────────────────────┬──────────────────────┐    │
+│  │  LEFT                    │  RIGHT               │    │
+│  │                          │                      │    │
+│  │  // result               │  // simulation log   │    │
+│  │  82 / 100                │  [full log stream]   │    │
+│  │  ✓ passed                │                      │    │
+│  │                          │                      │    │
+│  │  // requirements         │                      │    │
+│  │  [checklist]             │                      │    │
+│  │                          │  ── xp earned ──     │    │
+│  │  // metrics              │  +410 research funds │    │
+│  │  [2-col grid]            │                      │    │
+│  │                          │                      │    │
+│  │  [▶ next] [↺ retry]      │                      │    │
+│  └──────────────────────────┴──────────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## `src/components/simulation/ResultSummary.tsx` — implement fully
 
 ```tsx
 /**
- * src/components/simulation/ResultOverlay.tsx
+ * src/components/simulation/ResultSummary.tsx
  *
  * Full-screen overlay shown when simulation completes.
  *
  * WHY AN OVERLAY (not a separate page):
- * The user's architecture is still visible behind the overlay — they can
- * see what they built while reading their results. This reinforces the
- * connection between their decisions and the outcome. Navigating to a
- * separate page would break that connection.
+ * The user's architecture remains visible behind the overlay.
+ * This reinforces the connection between their decisions and outcome —
+ * they can see what they built while reading their results.
+ * Navigating to a separate page would break that connection.
  *
- * LAYOUT:
- * - Dark blurred backdrop covers the canvas
- * - Centered modal card with scrollable content
- * - Score + verdict at top (immediate emotional response)
- * - Metric grid below (detailed breakdown)
- * - Success conditions checklist (pass/fail per requirement)
- * - Action buttons at bottom (Try Again / Back to Challenges)
+ * LAYOUT: left-right split
+ * Left:  score + requirements checklist + metrics grid + action buttons
+ * Right: full simulation log (continued from builder) + XP at bottom
+ *
+ * The log on the right is the SAME log from the builder terminal —
+ * it continues the narrative, ending with the score announcement and XP.
+ * This makes the result feel like a natural conclusion, not a new screen.
  */
 ```
 
 ### Props
 ```ts
-interface ResultOverlayProps {
-  /** The completed simulation result containing all metrics and final score */
+interface ResultSummaryProps {
+  /** The completed simulation result */
   result: SimulationResult
-  /** The challenge that was just played — needed for success condition evaluation */
+  /** The challenge that was just played */
   problem: Problem
-  /** Called when user clicks Try Again — resets simulation, closes overlay */
+  /** Full log from simulation — shown in right panel */
+  logs: LogEntry[]
+  /** Called when user clicks reset / try again */
   onReset: () => void
 }
 ```
 
-### Layout structure
+### Outer overlay
+```tsx
+<div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+  <div className="
+    flex w-full max-w-3xl max-h-[90vh]
+    bg-[#0a0f1a] border border-[#1e293b] rounded-md
+    overflow-hidden shadow-2xl
+  ">
+    {/* left panel */}
+    {/* right panel */}
+  </div>
+</div>
 ```
-┌─────────────────────────────────────────┐
-│  backdrop: bg-black/60 backdrop-blur-sm │
-│  ┌───────────────────────────────────┐  │
-│  │  [✅ or ❌]                       │  │
-│  │  Challenge Passed! / Not Quite    │  │
-│  │                                   │  │
-│  │  82 / 100                         │  │
-│  │  +410 XP earned    (if passed)    │  │
-│  │                                   │  │
-│  │  ── Metrics ───────────────────   │  │
-│  │  [ReportCard grid]                │  │
-│  │                                   │  │
-│  │  ── Requirements ──────────────   │  │
-│  │  [SuccessConditions list]         │  │
-│  │                                   │  │
-│  │  [Try Again]  [Back to Challenges]│  │
-│  └───────────────────────────────────┘  │
-└─────────────────────────────────────────┘
-```
-
-### Score display rules
-- Score color:
-  - >= 70 (passed): `text-green-500 dark:text-green-400`
-  - 50–69: `text-amber-500 dark:text-amber-400`
-  - < 50: `text-red-500 dark:text-red-400`
-- Modal max width: `max-w-lg w-full`
-- Modal max height: `max-h-[90vh] overflow-y-auto`
-- Modal background: `bg-white dark:bg-slate-800`
-- Modal border: `border border-slate-200 dark:border-slate-700`
-- Modal padding: `p-8 rounded-2xl shadow-2xl`
-
-### Evaluate success conditions
-Use `evaluateSuccessConditions(result, problem)` from `src/engine/scorer.ts`
-and pass the output to `<SuccessConditions />`.
-
-### Action buttons
-- **Try Again** — `variant="secondary"`, calls `onReset`
-- **Back to Challenges** — `variant="ghost"`, uses `next/navigation` router to push `/sys-simulation`
-- Layout: `flex gap-3 mt-6`
 
 ---
 
-## `src/components/simulation/ReportCard.tsx` — implement fully
+### Left panel
 
-```tsx
-/**
- * src/components/simulation/ReportCard.tsx
- *
- * Displays the post-simulation metric grid inside ResultOverlay.
- *
- * WHY THIS EXISTS:
- * The result report has 8 metrics to display. Extracting them into a
- * dedicated component keeps ResultOverlay focused on layout and flow,
- * not on metric formatting logic.
- *
- * Each metric is displayed as a labeled card with a value and
- * an optional status color (healthy/warning/critical/neutral).
- */
+Width: `flex-1`, padding: `p-6`, overflow: `overflow-y-auto`
+
+#### Score section
+```
+// result
+
+82 / 100
+✓ challenge passed.
 ```
 
-### Props
-```ts
-interface ReportCardProps {
-  /** The completed simulation result to display metrics from */
-  result: SimulationResult
-  /** Initial budget — used to calculate cost efficiency display */
-  initialBudget: number
-}
+- Header: `// result` — `text-[9px] text-[#334155] uppercase tracking-widest mb-4`
+- Score number: `text-5xl font-medium`
+- Score color:
+  - `finalScore >= 70` → `#4ade80`
+  - `finalScore >= 50` → `#fbbf24`
+  - `finalScore < 50`  → `#ef4444`
+- `/ 100` → `text-xl text-[#334155]`
+- Verdict line:
+  - Passed: `✓ challenge passed.` → `text-xs text-[#4ade80] mt-1`
+  - Failed: `✗ requirements not met.` → `text-xs text-[#ef4444] mt-1`
+
+---
+
+#### Requirements section
+```
+// requirements
+
+✓  availability ≥ 99%          99.8%
+✓  zero dropped requests        12
+✗  budget not exceeded          -$140
 ```
 
-### Metrics to display (2-column grid)
+- Header: `// requirements` — same style as score header, `mt-6 mb-3`
+- Use `<SuccessConditions />` component (see below)
 
-| Label | Value | Status logic |
+---
+
+#### Metrics section
+```
+// metrics
+
+peak rps      avg latency    p95 latency    availability
+3,000         44ms           91ms           99.8%
+
+cache hit     dropped req    infra cost     final balance
+76%           12             $660           $340
+```
+
+- Header: `// metrics` — same style, `mt-6 mb-3`
+- Grid: `grid grid-cols-2 gap-2`
+- Each cell:
+```
+  label
+  value
+```
+  - Background: `#0f172a`
+  - Border: `0.5px solid #1e293b`
+  - Border radius: `rounded-sm`
+  - Padding: `px-3 py-2`
+  - Label: `text-[9px] text-[#475569] uppercase tracking-wide mb-1`
+  - Value: `text-sm font-medium text-[#94a3b8]`
+
+Metrics to display:
+
+| label | value | format |
 |---|---|---|
-| Peak RPS | `{result.peakRps.toLocaleString()} req/s` | neutral |
-| Avg Latency | `{result.avgLatencyMs}ms` | healthy ≤100ms, warning ≤300ms, critical >300ms |
-| P95 Latency | `{result.p95LatencyMs}ms` | healthy ≤200ms, warning ≤500ms, critical >500ms |
-| Availability | `{result.availability}%` | healthy ≥99%, warning ≥95%, critical <95% |
-| Cache Hit Ratio | `{(result.cacheHitRatio * 100).toFixed(0)}%` | healthy ≥70%, warning ≥40%, critical <40% |
-| Dropped Requests | `{result.droppedRequests.toLocaleString()}` | healthy =0, warning ≤50, critical >50 |
-| Infra Cost | `$${result.totalInfraCost.toLocaleString()}` | neutral |
-| Final Balance | `$${result.finalBalance.toLocaleString()}` | healthy >0, critical ≤0 |
+| peak rps | `result.peakRps` | `{n.toLocaleString()} req/s` |
+| avg latency | `result.avgLatencyMs` | `{n}ms` |
+| p95 latency | `result.p95LatencyMs` | `{n}ms` |
+| availability | `result.availability` | `{n}%` |
+| cache hit | `result.cacheHitRatio` | `{(n*100).toFixed(0)}%` |
+| dropped req | `result.droppedRequests` | `{n.toLocaleString()}` |
+| infra cost | `result.totalInfraCost` | `$${n.toLocaleString()}` |
+| final balance | `result.finalBalance` | `$${n.toLocaleString()}` |
 
-### Layout
-- Grid: `grid grid-cols-2 gap-3`
-- Each cell: use `<StatCard>` from `src/components/ui/StatCard.tsx`
-- Section header above grid: `text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3`
+---
+
+#### Action buttons
+```
+[▶ next challenge]  [↺ try again]  [← back to list]
+```
+
+- Layout: `flex gap-2 mt-6`
+- **Next challenge** (only if passed):
+  - Style: `bg-[#0d2a0d] text-[#4ade80] border border-[#1a3a1a]`
+  - Action: `router.push('/sys-simulation')` — list page, user picks next
+- **Try again**:
+  - Style: `bg-[#1e293b] text-[#64748b] border border-[#334155]`
+  - Action: `onReset()`
+- **Back to list**:
+  - Style: ghost, same as try again
+  - Action: `router.push('/sys-simulation')`
+- Size: `px-3 py-1 text-xs rounded-sm font-mono`
+
+---
+
+### Right panel
+
+Width: `w-[220px]`, flex-shrink-0, `flex flex-col`, background: `#060d0a`, border-left: `border-l border-[#1e293b]`
+
+#### Log area
+```
+// log
+──────────────
+[00:00] ⚙ init complete.
+[00:05] ℹ cache hit 78%.
+[00:12] ✕ api overloaded.
+[01:00] ✓ score: 82/100.
+[01:00] ℹ +410 xp earned.
+```
+
+- Header: `// log` — `text-[9px] text-[#1a3a1a] uppercase tracking-widest px-3 py-2 border-b border-[#0d1f14] flex-shrink-0`
+- Log area: `flex-1 overflow-y-auto px-3 py-2`
+- Font: monospace, `text-[11px]`, `leading-relaxed`
+- Same level → color mapping as TerminalSidebar
+- Auto-scroll to bottom on mount: `useEffect` + `useRef`
+- **No blinking cursor** — simulation is complete
+
+#### XP section (bottom of right panel)
+```
+// xp earned
++410 research funds
+```
+
+- Only shown when `result.passed === true`
+- Border top: `border-t border-[#0d1f14]`
+- Padding: `px-3 py-3 flex-shrink-0`
+- Header: `// xp earned` — `text-[9px] text-[#1a3a1a] uppercase tracking-widest mb-2`
+- Value: `text-lg font-medium text-[#378ADD]` — `+{result.researchXp}`
+- Label: `text-[10px] text-[#334155]` — `research funds`
 
 ---
 
@@ -163,13 +248,13 @@ interface ReportCardProps {
 /**
  * src/components/simulation/SuccessConditions.tsx
  *
- * Displays a checklist of success conditions and whether each was met.
+ * Displays a checklist of success conditions with pass/fail per condition.
  *
  * WHY THIS EXISTS:
- * The user needs to know exactly why they passed or failed — not just
- * a single score. Showing each condition individually gives actionable
- * feedback: "You met availability but dropped too many requests."
- * This turns failure into a learning moment, not just a number.
+ * A single score number doesn't tell the user WHY they passed or failed.
+ * Showing each condition individually gives actionable feedback:
+ * "You met availability but exceeded the budget."
+ * This turns failure into a specific learning moment.
  */
 ```
 
@@ -181,7 +266,7 @@ interface SuccessConditionsProps {
    * from src/engine/scorer.ts
    */
   conditions: Array<{
-    /** Human-readable requirement label e.g. "Availability ≥ 99%" */
+    /** Human-readable requirement label */
     label: string
     /** Whether this condition was satisfied */
     passed: boolean
@@ -195,17 +280,18 @@ interface SuccessConditionsProps {
 
 ### Item layout
 ```
-✅  Availability ≥ 99%          actual: 99.8%
-❌  Zero dropped requests        actual: 143
-✅  Budget not exceeded          actual: $340 remaining
+✓  availability ≥ 99%          99.8%
+✗  budget not exceeded          -$140
 ```
 
-- Passed: `text-green-600 dark:text-green-400` + ✅ icon
-- Failed: `text-red-600 dark:text-red-400` + ❌ icon
-- Layout per item: `flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700 last:border-0`
-- Label: `text-sm font-medium`
-- Actual value: `text-xs text-slate-500 dark:text-slate-400 ml-auto`
-- Section header: same style as ReportCard section header
+- Container: `flex flex-col gap-1`
+- Each row: `flex items-center justify-between py-1.5 border-b border-[#131b28] last:border-0`
+- Left: icon + label
+  - Passed: `✓` `text-[#4ade80]` + label `text-xs text-[#4ade80]`
+  - Failed: `✗` `text-[#ef4444]` + label `text-xs text-[#ef4444]`
+- Right: actual value
+  - Passed: `text-[10px] text-[#4ade80]`
+  - Failed: `text-[10px] text-[#ef4444]`
 
 ---
 
@@ -213,15 +299,20 @@ interface SuccessConditionsProps {
 
 - [ ] `npm run dev` — no TypeScript errors
 - [ ] `npm run build` — passes cleanly
-- [ ] ResultOverlay appears automatically when simulation completes
-- [ ] Score color is green when passed, amber when 50–69, red when < 50
-- [ ] All 8 metric cards render with correct values
-- [ ] StatCard status colors are correct per metric thresholds
-- [ ] All success conditions render with correct pass/fail state
-- [ ] "Try Again" resets simulation and closes overlay
-- [ ] "Back to Challenges" navigates to `/sys-simulation`
-- [ ] If challenge passed — solved state persists (challenge list shows checkmark)
-- [ ] Overlay is scrollable on smaller desktop screens
-- [ ] No `any` types anywhere
-- [ ] Every component has a top-level JSDoc comment
-- [ ] Every prop has an inline comment
+- [ ] ResultSummary appears automatically when simulation completes
+- [ ] Overlay covers canvas with dark blur backdrop
+- [ ] Score color: green ≥70, amber ≥50, red <50
+- [ ] Verdict line correct — passed or failed
+- [ ] All 8 metric cells render with correct values
+- [ ] Requirements checklist — correct pass/fail per condition
+- [ ] Full simulation log visible in right panel
+- [ ] Log auto-scrolls to bottom on mount
+- [ ] No blinking cursor in result log
+- [ ] XP section visible only when passed
+- [ ] "Next challenge" button visible only when passed
+- [ ] "Try again" calls onReset — overlay closes, canvas resets
+- [ ] "Back to list" navigates to `/sys-simulation`
+- [ ] After passing — challenge list shows solved state
+- [ ] No `any` types
+- [ ] Every component has top-level JSDoc comment
+- [ ] Every prop has inline comment
