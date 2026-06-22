@@ -208,11 +208,11 @@ function ChallengeBuilder({ problemId }: ChallengeBuilderProps) {
         {/* problem description — shown in idle state only */}
         {simState.status === 'idle' && (
           <div className="
-            px-4 py-2
+            px-4 py-4 w-full
             border-b border-[#1e293b]
             bg-[#0a0f1a]
-            font-mono text-[10px] text-[#475569]
-            whitespace-pre-line leading-relaxed
+            font-mono text-[12px] text-[#62738a]
+            leading-relaxed text-center
           ">
             {problem.description.trim()}
           </div>
@@ -263,7 +263,7 @@ function ChallengeBuilder({ problemId }: ChallengeBuilderProps) {
 
           {/* Right: terminal log — full height */}
           <div
-            className="w-[220px] flex-shrink-0"
+            className="w-[400px] flex-shrink-0"
             style={{ borderLeft: '1px solid #131b28' }}
           >
             <TerminalSidebar
