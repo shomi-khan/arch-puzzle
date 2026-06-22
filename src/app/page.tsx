@@ -28,11 +28,6 @@ export default function SysSimulationPage() {
     <>
       <MobileBlock />
       <div className="hidden max-w-3xl mx-auto px-6 py-10 lg:block" style={{ backgroundColor: '#0a0f1a' }}>
-        <header className="mb-6">
-          <h2 className="font-mono text-xs tracking-widest" style={{ color: '#334155', marginBottom: '1rem' }}>
-            // challenges
-          </h2>
-        </header>
         <ChallengeList problems={problems} />
       </div>
     </>

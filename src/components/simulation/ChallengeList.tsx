@@ -90,7 +90,7 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
               {/* Prefix */}
               <div
                 style={{
-                  fontSize: '14px',
+                  fontSize: '16px',
                   color: solved ? '#4ade80' : unlocked ? '#f59e0b' : '#475569',
                   fontFamily: 'monospace',
                 }}
@@ -102,14 +102,14 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
               <div>
                 <div
                   style={{
-                    fontSize: '12px',
+                    fontSize: '14px',
                     color: unlocked ? '#e2e8f0' : '#475569',
                     fontFamily: 'monospace',
                   }}
                 >
                   {problem.title.toLowerCase()}
                 </div>
-                <div className="mt-0.5 text-[10px]" style={{ color: '#334155', fontFamily: 'monospace' }}>
+                <div className="mt-0.5 text-[12px]" style={{ color: '#62738a', fontFamily: 'monospace' }}>
                   {problem.subtitle.toLowerCase()}
                 </div>
               </div>
@@ -117,7 +117,7 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
               {/* Difficulty */}
               <div
                 style={{
-                  fontSize: '11px',
+                  fontSize: '13px',
                   color: unlocked
                     ? difficultyColors[problem.difficulty]
                     : '#334155',
@@ -130,7 +130,7 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
               {/* Status */}
               <div
                 style={{
-                  fontSize: '11px',
+                  fontSize: '13px',
                   color: solved ? '#4ade80' : '#475569',
                   fontFamily: 'monospace',
                   textAlign: 'right',
@@ -147,10 +147,9 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
       {hydrated && (
         <div
           style={{
-            marginTop: '2rem',
             paddingTop: '1rem',
             borderTop: '1px solid #131b28',
-            fontSize: '11px',
+            fontSize: '13px',
             fontFamily: 'monospace',
             color: '#334155',
           }}
