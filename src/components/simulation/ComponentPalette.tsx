@@ -23,23 +23,12 @@ import {
   Zap,
 } from 'lucide-react'
 import { componentRegistry } from '@/config/components'
-import type { ComponentCategory } from '@/types'
 
 interface ComponentPaletteProps {
   /** Component type strings available for this challenge */
   availableComponents: string[]
   /** Whether simulation is running - palette is disabled during simulation */
   disabled: boolean
-}
-
-const categoryBorderStyles: Record<ComponentCategory, string> = {
-  network: 'border-l-blue-400',
-  compute: 'border-l-green-400',
-  cache: 'border-l-red-400',
-  database: 'border-l-purple-400',
-  cdn: 'border-l-amber-400',
-  queue: 'border-l-orange-400',
-  security: 'border-l-pink-400',
 }
 
 const iconMap: Record<string, ComponentType<{ size?: number }>> = {

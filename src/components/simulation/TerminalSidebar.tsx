@@ -33,6 +33,14 @@ const levelColors: Record<LogEntry['level'], string> = {
   success: '#4ade80',
 }
 
+function formatTime(second: number): string {
+  return `${String(second).padStart(2, '0')}:00`
+}
+
+function getLevelColor(level: LogEntry['level']): string {
+  return levelColors[level]
+}
+
 /**
  * TerminalSidebar - renders autoscrolling log with status-based cursor.
  */
@@ -89,12 +97,12 @@ export default function TerminalSidebar({
         {logs.map((entry, idx) => (
           <div
             key={idx}
-            style={{
-              color: levelColors[entry.level],
-              marginBottom: '0.25rem',
-            }}
+            className="whitespace-nowrap overflow-hidden text-ellipsis text-[11px] leading-relaxed"
+            style={{ marginBottom: '0.25rem' }}
           >
-            [{String(entry.second).padStart(2, '0')}:00] {entry.message}
+            <span className="text-[#334155]">[{formatTime(entry.second)}]</span>
+            {' '}
+            <span style={{ color: getLevelColor(entry.level) }}>{entry.message}</span>
           </div>
         ))}
 

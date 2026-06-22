@@ -50,7 +50,7 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
   )
 
   return (
-    <div>
+    <div className="text-left">
       <div>
         {problems.map((problem, index) => {
           const solved = hydrated && solvedIds.has(problem.id)
@@ -74,7 +74,7 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
               style={{
                 display: 'grid',
                 gridTemplateColumns: '20px 1fr 80px 80px',
-                alignItems: 'center',
+                alignItems: 'start',
                 gap: '1rem',
                 padding: '0.75rem 0.75rem',
                 borderRadius: '0.375rem',
@@ -98,15 +98,20 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
                 {solved ? '✓' : unlocked ? '▶' : '🔒'}
               </div>
 
-              {/* Title */}
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: unlocked ? '#e2e8f0' : '#475569',
-                  fontFamily: 'monospace',
-                }}
-              >
-                {problem.title}
+              {/* Title + subtitle */}
+              <div>
+                <div
+                  style={{
+                    fontSize: '12px',
+                    color: unlocked ? '#e2e8f0' : '#475569',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  {problem.title.toLowerCase()}
+                </div>
+                <div className="mt-0.5 text-[10px]" style={{ color: '#334155', fontFamily: 'monospace' }}>
+                  {problem.subtitle.toLowerCase()}
+                </div>
               </div>
 
               {/* Difficulty */}
@@ -119,7 +124,7 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
                   fontFamily: 'monospace',
                 }}
               >
-                {problem.difficulty}
+                {problem.difficulty.toLowerCase()}
               </div>
 
               {/* Status */}
@@ -151,7 +156,7 @@ export default function ChallengeList({ problems }: ChallengeListProps) {
           }}
         >
           {solvedCount}/{problems.length} solved
-          {nextChallenge && ` · next: ${nextChallenge.title}`}
+          {nextChallenge && ` · next: ${nextChallenge.title.toLowerCase()}`}
           <span
             className="cursor-blink"
             style={{ color: '#378ADD', marginLeft: '0.25rem' }}

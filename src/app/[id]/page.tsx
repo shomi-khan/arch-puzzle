@@ -205,6 +205,19 @@ function ChallengeBuilder({ problemId }: ChallengeBuilderProps) {
         {/* Metrics row: full width below header */}
         <MetricsRow simState={simState} initialBudget={problem.initialBudget} />
 
+        {/* problem description — shown in idle state only */}
+        {simState.status === 'idle' && (
+          <div className="
+            px-4 py-2
+            border-b border-[#1e293b]
+            bg-[#0a0f1a]
+            font-mono text-[10px] text-[#475569]
+            whitespace-pre-line leading-relaxed
+          ">
+            {problem.description.trim()}
+          </div>
+        )}
+
         {/* Main area: palette + canvas + terminal */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left: component palette */}
