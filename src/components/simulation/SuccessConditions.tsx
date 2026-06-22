@@ -3,22 +3,22 @@
 /**
  * src/components/simulation/SuccessConditions.tsx
  *
- * Displays a checklist of success conditions and whether each was met.
+ * Displays a checklist of success conditions with pass/fail per condition.
  *
  * WHY THIS EXISTS:
- * The user needs to know exactly why they passed or failed - not just
- * a single score. Showing each condition individually gives actionable
- * feedback: "You met availability but dropped too many requests."
- * This turns failure into a learning moment, not just a number.
+ * A single score number doesn't tell the user WHY they passed or failed.
+ * Showing each condition individually gives actionable feedback:
+ * "You met availability but exceeded the budget."
+ * This turns failure into a specific learning moment.
  */
 
 interface SuccessConditionsProps {
   /**
-   * Evaluated conditions - output of evaluateSuccessConditions()
+   * Evaluated conditions — output of evaluateSuccessConditions()
    * from src/engine/scorer.ts
    */
   conditions: Array<{
-    /** Human-readable requirement label e.g. "Availability >= 99%" */
+    /** Human-readable requirement label */
     label: string
     /** Whether this condition was satisfied */
     passed: boolean
@@ -36,48 +36,58 @@ export default function SuccessConditions({
   conditions,
 }: SuccessConditionsProps) {
   return (
-    <section>
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
-        Requirements
-      </h2>
-      <div>
-        {conditions.map((condition) => (
-          <div
-            key={condition.label}
-            className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-0 dark:border-slate-700"
-          >
-            <div
+    <div className="flex flex-col gap-1">
+      {conditions.map((condition) => (
+        <div
+          key={condition.label}
+          className="flex items-center justify-between py-1.5 border-b border-[#131b28] last:border-0"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className={condition.passed ? 'text-[#4ade80]' : 'text-[#ef4444]'}
+              aria-hidden="true"
+            >
+              {condition.passed ? '✓' : '✗'}
+            </span>
+            <span
               className={[
-                'flex min-w-0 items-center gap-2 text-sm font-medium',
-                condition.passed
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-red-600 dark:text-red-400',
+                'text-xs truncate',
+                condition.passed ? 'text-[#4ade80]' : 'text-[#ef4444]',
               ].join(' ')}
             >
-              <span aria-hidden="true">{condition.passed ? '✅' : '❌'}</span>
-              <span className="truncate">{condition.label}</span>
-            </div>
-            <span className="ml-auto shrink-0 text-xs text-slate-500 dark:text-slate-400">
-              actual: {formatActual(condition)}
+              {condition.label}
             </span>
           </div>
-        ))}
-      </div>
-    </section>
+          <span
+            className={[
+              'text-[10px] shrink-0 ml-2',
+              condition.passed ? 'text-[#4ade80]' : 'text-[#ef4444]',
+            ].join(' ')}
+          >
+            {formatActual(condition)}
+          </span>
+        </div>
+      ))}
+    </div>
   )
 }
 
-/**
- * formatActual - formats requirement values based on the condition label.
- */
-function formatActual(condition: SuccessConditionsProps['conditions'][number]) {
+function formatActual(
+  condition: SuccessConditionsProps['conditions'][number],
+): string {
   const label = condition.label.toLowerCase()
 
-  if (label.includes('availability')) return `${condition.actual}%`
-  if (label.includes('latency')) return `${condition.actual}ms`
-  if (label.includes('error')) return `${condition.actual}%`
+  if (label.includes('availability') || label.includes('error')) {
+    return `${condition.actual}%`
+  }
+  if (label.includes('latency')) {
+    return `${condition.actual}ms`
+  }
   if (label.includes('budget') || label.includes('balance')) {
-    return `$${condition.actual.toLocaleString()} remaining`
+    if (condition.actual < 0) {
+      return `-$${Math.abs(condition.actual).toLocaleString()}`
+    }
+    return `$${condition.actual.toLocaleString()}`
   }
 
   return condition.actual.toLocaleString()
