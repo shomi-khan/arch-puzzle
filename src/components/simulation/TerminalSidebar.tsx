@@ -97,12 +97,11 @@ export default function TerminalSidebar({
         {logs.map((entry, idx) => (
           <div
             key={idx}
-            className="whitespace-nowrap overflow-hidden text-ellipsis text-[11px] leading-relaxed"
+            className="flex gap-2 text-[11px] leading-relaxed"
             style={{ marginBottom: '0.25rem' }}
           >
-            <span className="text-[#334155]">[{formatTime(entry.second)}]</span>
-            {' '}
-            <span style={{ color: getLevelColor(entry.level) }}>{entry.message}</span>
+            <div className="text-[#334155]">[{formatTime(entry.second)}]</div>
+            <div style={{ color: getLevelColor(entry.level) }}>{entry.message}</div>
           </div>
         ))}
 
